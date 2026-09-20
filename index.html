@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نقاشی سه‌بعدی با انگشت</title>
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0f1115; --panel:rgba(18,20,26,.76); --line:rgba(255,255,255,.14);
+    --text:#f2f3f5; --dim:#9aa0ab; --accent:#3ddc97;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none!important}
+  html,body{height:100%;background:#000;color:var(--text);overflow:hidden;
+    overscroll-behavior:none;touch-action:manipulation;
+    font-family:Vazirmatn,system-ui,Tahoma,sans-serif}
+
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #view{position:relative;width:100%;height:100%}
+  #view.mirror{transform:scaleX(-1)}
+  #view video,#view canvas{position:absolute;inset:0;width:100%;height:100%}
+  #video{object-fit:fill;background:#000;opacity:0}
+  #view.cam #video{opacity:1}
+
+  #hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+  .pill{background:var(--panel);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:999px}
+  #mode{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:15px}
+  #mode i{width:10px;height:10px;border-radius:50%;background:var(--dim)}
+  #mode[data-m=draw] i{background:var(--accent)}
+  #mode[data-m=erase] i{background:#ffb84d}
+  #mode[data-m=clear] i{background:#ff4d6d}
+  #mode[data-m=zoom] i{background:#4dabf7}
+  #mode[data-m=rotate] i{background:#c792ea}
+  #fingers{display:flex;gap:6px;padding:6px 8px}
+  #fingers span{font-size:12px;padding:4px 9px;border-radius:999px;color:var(--dim);
+    background:rgba(255,255,255,.06)}
+  #fingers span.on{background:var(--accent);color:#08140e;font-weight:700}
+
+  #bar{position:fixed;left:0;right:0;bottom:0;padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 12px);
+    background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);border-radius:18px 18px 0 0;display:flex;flex-direction:column;gap:10px}
+  #row1{display:flex;align-items:center;gap:14px}
+  #colors{display:flex;gap:10px}
+  #colors button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;
+    outline:1px solid var(--line)}
+  #colors button.sel{border-color:#fff}
+  #size{flex:1;accent-color:var(--accent)}
+  #btns{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  #btns button{padding:6px 2px;min-height:44px;line-height:1.35;font:inherit;font-size:11.5px;color:var(--text);
+    background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px}
+  #btns button[aria-pressed=true]{border-color:var(--accent)}
+  #btns button:active{background:rgba(255,255,255,.16)}
+
+  #start{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:20px;padding:24px;text-align:center;overflow:auto}
+  #start h1{font-size:25px}
+  #guide{list-style:none;display:flex;flex-direction:column;gap:9px;font-size:14.5px;line-height:1.7;
+    max-width:350px;text-align:right}
+  #guide b{color:var(--accent)}
+  #go{font:inherit;font-size:17px;font-weight:700;padding:14px 34px;border:0;border-radius:14px;
+    background:var(--accent);color:#08140e}
+  #msg{color:#ff8a9b;font-size:14px;line-height:1.7;max-width:340px;min-height:1.5em}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="view">
+    <video id="video" playsinline muted autoplay></video>
+    <canvas id="draw"></canvas>
+    <canvas id="over"></canvas>
+  </div>
+</div>
+
+<div id="hud" hidden>
+  <div id="mode" class="pill" data-m="idle"><i></i><span id="modeText"></span></div>
+  <div id="fingers" class="pill">
+    <span data-f="thumb">شست</span>
+    <span data-f="index">اشاره</span>
+    <span data-f="middle">وسط</span>
+    <span data-f="ring">حلقه</span>
+    <span data-f="pinky">کوچک</span>
+  </div>
+</div>
+
+<div id="bar" hidden>
+  <div id="row1">
+    <div id="colors"></div>
+    <input id="size" type="range" min="2" max="26" value="8" aria-label="ضخامت قلم">
+  </div>
+  <div id="btns">
+    <button id="pen" aria-pressed="true">نقاشی: روشن</button>
+    <button id="undo">برگردان</button>
+    <button id="resetv">بازنشانی نما</button>
+    <button id="depth" aria-pressed="false">عمق: خاموش</button>
+    <button id="skel" aria-pressed="true">اسکلت</button>
+    <button id="cam" aria-pressed="false">نمایش دوربین</button>
+    <button id="flip">جلو/عقب</button>
+    <button id="save">ذخیره</button>
+    <button id="clear">پاک</button>
+  </div>
+</div>
+
+<div id="start">
+  <h1>نقاشی سه‌بعدی با انگشت</h1>
+  <ul id="guide">
+    <li><b>فقط اشاره بالا (شست جمع):</b> نقاشی</li>
+    <li><b>اشاره + وسط:</b> پاک‌کن</li>
+    <li><b>شست + اشاره باز، بقیه بسته:</b> زوم. انگشت‌ها را از هم دور کن = زوم این، نزدیک کن = زوم اوت. وقتی از این حالت خارج شوی، اندازه همان‌جا که بود می‌ماند</li>
+    <li><b>فقط شست باز، بقیه مشت:</b> با حرکت شست، نقاشی را بچرخان و برو پشتش</li>
+    <li><b>کف دست باز (حدود یک ثانیه):</b> پاک کردن همه (با «برگردان» برمی‌گردد)</li>
+    <li><b>مشت:</b> فقط نشانگر، بدون نقاشی</li>
+  </ul>
+  <button id="go">شروع دوربین</button>
+  <p id="msg"></p>
+</div>
+
+<script>
+/* ================= تنظیمات (اینجا را می‌توانی تغییر بدهی) ================= */
+const MAX_HANDS   = 1;      // تعداد دست‌ها (کنترل فقط با دست اول)
+const MODEL_LEVEL = 0;      // 0 سبک و سریع (دانلود کمتر)، 1 دقیق‌تر
+const CLEAR_HOLD  = 900;    // میلی‌ثانیه نگه داشتن کف دست برای پاک کردن همه
+const SMOOTH      = 0.55;   // نرمی نشانگر: هرچه کمتر، نرم‌تر ولی کندتر
+const ROT_SPEED   = 0.012;  // سرعت چرخش (رادیان به ازای هر پیکسل حرکت شست)
+const ZOOM_MIN    = 0.25;   // کمترین زوم
+const ZOOM_MAX    = 8;      // بیشترین زوم
+const ZOOM_REWIND = 450;    // میلی‌ثانیه: وقتی از حالت زوم خارج می‌شوی، زوم به همین‌قدر قبل برمی‌گردد
+const DEPTH_GAIN  = 3;      // شدت عمق با نزدیک/دور کردن دست
+const THUMB_ON    = 0.65;   // شست وقتی «باز» حساب می‌شود که از این مقدار بیشتر شود
+const THUMB_OFF   = 0.45;   // و وقتی «بسته» حساب می‌شود که از این کمتر شود
+const COLORS      = ['#ff4d6d','#ffd23f','#3ddc97','#4dabf7','#ffffff'];
+
+const CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+const TIPS = [4,8,12,16,20];
+
+/* ================= عناصر ================= */
+const $ = id => document.getElementById(id);
+const video = $('video'), view = $('view');
+const drawC = $('draw'), overC = $('over');
+const dctx = drawC.getContext('2d'), octx = overC.getContext('2d');
+const chips = [...document.querySelectorAll('#fingers span')];
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/* ================= وضعیت ================= */
+let errShown = false, loadHost = '';
+let hands = null, stream = null, running = false, busy = false, lost = true;
+let facing = 'user', mirror = true;
+let color = COLORS[0], size = +$('size').value, showSkel = true;
+let drawEnabled = true, depthOn = false, depthRef = null, hsSm = null, thumbOn = false;
+let mode = 'idle', pending = 'idle', pendCount = 0;
+let lastPt = null, sm = null, clearStart = 0, clearDone = false;
+let zoomSt = null, rSm = null, rotLast = null, zoomHist = [], showCam = false;
+
+/* نقاشی به‌صورت خط‌های برداری سه‌بعدی ذخیره می‌شود: {p:[[x,y,z],...], w, c} */
+let strokes = [], history = [], curStroke = null, snapped = false;
+
+/* نما: چرخش، زوم و جابه‌جایی (نقطه مرکز چرخش) */
+const V = { yaw: 0, pitch: 0, zoom: 1, px: 0, py: 0, pz: 0 };
+const T = { cy: 1, sy: 0, cp: 1, sp: 0 };
+let F = 1000, CX = 0, CY = 0;          // فاصله کانونی و مرکز بوم
+let PX = 0, PY = 0, PK = 1, PZ = 0;    // خروجی proj
+
+/* ================= ریاضی سه‌بعدی ================= */
+function trig() {
+  T.cy = Math.cos(V.yaw);   T.sy = Math.sin(V.yaw);
+  T.cp = Math.cos(V.pitch); T.sp = Math.sin(V.pitch);
+}
+
+// نقطه دنیا -> پیکسل صفحه (نتیجه در PX, PY, PK, PZ)
+function proj(x, y, z) {
+  x -= V.px; y -= V.py; z -= V.pz;
+  let x1 = x * T.cy + z * T.sy, z1 = -x * T.sy + z * T.cy;
+  let y2 = y * T.cp + z1 * T.sp, z2 = -y * T.sp + z1 * T.cp;
+  x1 *= V.zoom; y2 *= V.zoom; z2 *= V.zoom;
+  const den = F - z2;
+  if (den < F * 0.15) { PK = 0; return false; }   // پشت دوربین
+  PK = F / den; PX = CX + x1 * PK; PY = CY + y2 * PK; PZ = z2;
+  return true;
+}
+
+function unrot(xv, yv, zv) {
+  trig();
+  const y1 = yv * T.cp - zv * T.sp, z1 = yv * T.sp + zv * T.cp;
+  return [xv * T.cy - z1 * T.sy, y1, xv * T.sy + z1 * T.cy];
+}
+
+// پیکسل صفحه (در عمق zv نسبت به صفحه) -> نقطه دنیا
+function unproj(sx, sy, zv) {
+  const k = (F - zv) / F;
+  const r = unrot((sx - CX) * k, (sy - CY) * k, zv);
+  return [r[0] / V.zoom + V.px, r[1] / V.zoom + V.py, r[2] / V.zoom + V.pz];
+}
+
+/* ================= رندر نقاشی ================= */
+function drawFrame(W, H) {
+  // قاب صفحه، فقط وقتی نما تغییر کرده تا جهت چرخش دیده شود
+  const c = [[-W / 2, -H / 2], [W / 2, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]];
+  dctx.save();
+  dctx.strokeStyle = 'rgba(255,255,255,.35)';
+  dctx.lineWidth = 2 * W / 640;
+  dctx.setLineDash([10, 8]);
+  dctx.beginPath();
+  let ok = true;
+  c.forEach(([x, y], i) => {
+    if (!proj(x, y, 0)) { ok = false; return; }
+    if (i) dctx.lineTo(PX, PY); else dctx.moveTo(PX, PY);
+  });
+  if (ok) { dctx.closePath(); dctx.stroke(); }
+  dctx.restore();
+}
+
+function render() {
+  const W = drawC.width, H = drawC.height;
+  dctx.clearRect(0, 0, W, H);
+  trig();
+  const changedView = Math.abs(V.yaw) > 0.005 || Math.abs(V.pitch) > 0.005 ||
+    Math.abs(V.zoom - 1) > 0.005 || V.px || V.py || V.pz;
+  if (changedView) drawFrame(W, H);
+
+  // مرتب‌سازی از دور به نزدیک بر اساس مرکز هر خط
+  const order = [];
+  for (const s of strokes) {
+    const P = s.p, n = P.length;
+    let sx = 0, sy = 0, sz = 0;
+    for (let i = 0; i < n; i++) { sx += P[i][0]; sy += P[i][1]; sz += P[i][2]; }
+    if (!proj(sx / n, sy / n, sz / n)) { PZ = -1e9; PK = 1; }
+    order.push({ s, z: PZ, k: PK });
+  }
+  order.sort((a, b) => a.z - b.z);
+
+  dctx.lineCap = 'round'; dctx.lineJoin = 'round';
+  for (const { s, k } of order) {
+    const P = s.p;
+    const lw = Math.max(1, s.w * V.zoom * k);
+    dctx.globalAlpha = k >= 1 ? 1 : clamp(k * k, 0.3, 1);   // خط‌های دورتر کمی کم‌رنگ‌تر
+    dctx.strokeStyle = s.c; dctx.fillStyle = s.c; dctx.lineWidth = lw;
+    if (P.length === 1) {
+      if (proj(P[0][0], P[0][1], P[0][2])) {
+        dctx.beginPath(); dctx.arc(PX, PY, lw / 2, 0, Math.PI * 2); dctx.fill();
+      }
+      continue;
+    }
+    dctx.beginPath();
+    let pen = false;
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i];
+      if (!proj(p[0], p[1], p[2])) { pen = false; continue; }
+      if (pen) dctx.lineTo(PX, PY); else { dctx.moveTo(PX, PY); pen = true; }
+    }
+    dctx.stroke();
+  }
+  dctx.globalAlpha = 1;
+}
+
+/* ================= پاک‌کن و تاریخچه ================= */
+function segDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0;
+  t = clamp(t, 0, 1);
+  return Math.hypot(ax + t * dx - px, ay + t * dy - py);
+}
+
+function pushHistory() {
+  history.push(strokes.slice());
+  if (history.length > 60) history.shift();
+}
+
+// پاک‌کن در فضای صفحه کار می‌کند؛ خط‌هایی که از دایره رد می‌شوند بریده می‌شوند
+function eraseAt(ex, ey, r) {
+  trig();
+  let changed = false;
+  const out = [];
+  for (const s of strokes) {
+    const P = s.p, n = P.length;
+    const X = new Array(n), Y = new Array(n);
+    for (let i = 0; i < n; i++) {
+      if (proj(P[i][0], P[i][1], P[i][2])) { X[i] = PX; Y[i] = PY; } else { X[i] = NaN; Y[i] = NaN; }
+    }
+    let hit = false;
+    for (let i = 0; i < n; i++) {
+      if (Math.hypot(X[i] - ex, Y[i] - ey) < r) { hit = true; break; }
+      if (i < n - 1 && segDist(ex, ey, X[i], Y[i], X[i + 1], Y[i + 1]) < r) { hit = true; break; }
+    }
+    if (!hit) { out.push(s); continue; }
+
+    changed = true;
+    let run = [];
+    const flush = () => {
+      if (run.length >= 2) out.push({ p: run, w: s.w, c: s.c });
+      run = [];
+    };
+    for (let i = 0; i < n; i++) {
+      if (Math.hypot(X[i] - ex, Y[i] - ey) < r) { flush(); continue; }
+      run.push(P[i]);
+      if (i < n - 1 && segDist(ex, ey, X[i], Y[i], X[i + 1], Y[i + 1]) < r) flush();
+    }
+    flush();
+  }
+  if (changed) {
+    if (!snapped) {
+      history.push(strokes);
+      if (history.length > 60) history.shift();
+      snapped = true;
+    }
+    strokes = out;
+  }
+  return changed;
+}
+
+function clearAll() {
+  if (strokes.length) { history.push(strokes); if (history.length > 60) history.shift(); }
+  strokes = []; curStroke = null; depthRef = null;
+  render();
+}
+function undo() {
+  if (!history.length) return;
+  strokes = history.pop(); curStroke = null; lastPt = null;
+  render();
+}
+function resetView() {
+  V.yaw = V.pitch = 0; V.zoom = 1; V.px = V.py = V.pz = 0;
+  depthRef = null;
+  render();
+}
+
+// وقتی از حالت زوم خارج می‌شوی، انگشت‌ها در حال برگشتن به حالت عادی هستند و
+// فاصله‌شان عوض می‌شود. پس زوم را به مقدارِ کمی قبل از خروج برمی‌گردانیم.
+function rewindZoom() {
+  if (!zoomSt) return;
+  const cutoff = performance.now() - ZOOM_REWIND;
+  let st = { zoom: zoomSt.z0, px: zoomSt.pan0[0], py: zoomSt.pan0[1], pz: zoomSt.pan0[2] };
+  for (const h of zoomHist) { if (h.t <= cutoff) st = h; else break; }
+  V.zoom = st.zoom; V.px = st.px; V.py = st.py; V.pz = st.pz;
+  zoomHist = []; zoomSt = null;
+  render();
+}
+
+/* ================= رابط ================= */
+COLORS.forEach((c, i) => {
+  const b = document.createElement('button');
+  b.style.background = c; b.setAttribute('aria-label', 'رنگ ' + (i + 1));
+  if (i === 0) b.classList.add('sel');
+  b.onclick = () => {
+    color = c;
+    [...$('colors').children].forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+  };
+  $('colors').appendChild(b);
+});
+$('size').oninput = e => size = +e.target.value;
+$('pen').onclick = e => {
+  drawEnabled = !drawEnabled;
+  e.currentTarget.setAttribute('aria-pressed', drawEnabled);
+  e.currentTarget.textContent = 'نقاشی: ' + (drawEnabled ? 'روشن' : 'خاموش');
+  curStroke = null; lastPt = null;
+};
+$('depth').onclick = e => {
+  depthOn = !depthOn; depthRef = null;
+  e.currentTarget.setAttribute('aria-pressed', depthOn);
+  e.currentTarget.textContent = 'عمق: ' + (depthOn ? 'روشن' : 'خاموش');
+};
+$('skel').onclick = e => {
+  showSkel = !showSkel;
+  e.currentTarget.setAttribute('aria-pressed', showSkel);
+};
+$('cam').onclick = e => {
+  showCam = !showCam;
+  view.classList.toggle('cam', showCam);
+  e.currentTarget.setAttribute('aria-pressed', showCam);
+};
+$('undo').onclick = undo;
+$('resetv').onclick = resetView;
+$('clear').onclick = clearAll;
+$('flip').onclick = async () => {
+  facing = facing === 'user' ? 'environment' : 'user';
+  try { await startCamera(); }
+  catch (e) { facing = facing === 'user' ? 'environment' : 'user'; try { await startCamera(); } catch (_) {} }
+};
+$('save').onclick = () => {
+  const c = document.createElement('canvas');
+  c.width = drawC.width; c.height = drawC.height;
+  const x = c.getContext('2d');
+  if (mirror) { x.translate(c.width, 0); x.scale(-1, 1); }
+  if (showCam) x.drawImage(video, 0, 0, c.width, c.height);
+  else { x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); }
+  x.drawImage(drawC, 0, 0);
+  c.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'drawing-' + Date.now() + '.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+};
+
+function setMode(m, text) {
+  $('mode').dataset.m = m;
+  $('modeText').textContent = text;
+}
+const LABELS = {
+  idle:   'آماده — انگشت اشاره را بالا بگیر',
+  draw:   'در حال نقاشی',
+  hover:  'نقاشی خاموش است (فقط نشانگر)',
+  erase:  'پاک‌کن',
+  zoom:   'زوم: انگشت‌ها را دور یا نزدیک کن',
+  rotate: 'چرخش: شست را حرکت بده',
+  clear:  'پاک کردن همه…'
+};
+
+/* ================= دوربین ================= */
+async function startCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 } }
+  });
+  video.srcObject = stream;
+  await video.play();
+  mirror = facing === 'user';
+  view.classList.toggle('mirror', mirror);
+  layout();
+}
+
+function setSize(w, h) {
+  if (drawC.width === w && drawC.height === h) return;
+  drawC.width = overC.width = w;
+  drawC.height = overC.height = h;
+  F = w * 1.6; CX = w / 2; CY = h / 2;
+  render();
+}
+
+function layout() {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw) return;
+  setSize(vw, vh);
+  const s = Math.min(innerWidth / vw, innerHeight / vh);
+  view.style.width = vw * s + 'px';
+  view.style.height = vh * s + 'px';
+}
+addEventListener('resize', layout);
+addEventListener('orientationchange', () => setTimeout(layout, 300));
+
+/* ================= تشخیص انگشت‌ها (روی مختصات پیکسلی) ================= */
+function fingerState(P, hand) {
+  // انگشت باز: نوک آن از مچ دورتر از مفصل میانی‌اش باشد
+  const ext = (tip, pip) => d(P[tip], P[0]) > d(P[pip], P[0]) * 1.12;
+  // شست: فاصله نوک تا ریشه انگشت اشاره، با حدِ بالا و پایین تا سریع نپرد
+  const tr = d(P[4], P[5]) / hand;
+  thumbOn = thumbOn ? tr > THUMB_OFF : tr > THUMB_ON;
+  return { thumb: thumbOn, index: ext(8, 6), middle: ext(12, 10), ring: ext(16, 14), pinky: ext(20, 18) };
+}
+
+function classify(f) {
+  const others = f.middle || f.ring || f.pinky;
+  if (f.index && f.middle && f.ring && f.pinky) return 'clear';           // کف دست باز
+  if (f.index && f.middle && !f.ring && !f.pinky) return 'erase';         // اشاره + وسط
+  if (f.index && !others) return f.thumb ? 'zoom' : (drawEnabled ? 'draw' : 'hover');
+  if (f.thumb && !f.index && !others) return 'rotate';                    // فقط شست
+  return 'idle';
+}
+
+/* ================= نمایش روی صفحه ================= */
+function drawHand(P) {
+  const k = overC.width / 640;
+  octx.lineWidth = 3 * k;
+  octx.strokeStyle = 'rgba(255,255,255,.8)';
+  octx.beginPath();
+  for (const [a, b] of CONNECTIONS) { octx.moveTo(P[a].x, P[a].y); octx.lineTo(P[b].x, P[b].y); }
+  octx.stroke();
+  for (let i = 0; i < 21; i++) {
+    const tip = TIPS.includes(i);
+    octx.beginPath();
+    octx.arc(P[i].x, P[i].y, (tip ? 6 : 3.5) * k, 0, Math.PI * 2);
+    octx.fillStyle = tip ? '#3ddc97' : '#fff';
+    octx.fill();
+  }
+}
+
+function drawCursor(progress, P) {
+  const k = overC.width / 640, TAU = Math.PI * 2;
+  octx.save();
+  octx.lineWidth = 3 * k; octx.strokeStyle = '#fff';
+  if (mode === 'draw') {
+    octx.beginPath(); octx.arc(sm.x, sm.y, size / 2 + 2 * k, 0, TAU);
+    octx.fillStyle = color; octx.fill(); octx.stroke();
+  } else if (mode === 'erase') {
+    octx.beginPath(); octx.arc(sm.x, sm.y, size * 2, 0, TAU); octx.stroke();
+  } else if (mode === 'clear') {
+    octx.strokeStyle = '#ff4d6d'; octx.lineWidth = 6 * k;
+    octx.beginPath(); octx.arc(sm.x, sm.y, 30 * k, -Math.PI / 2, -Math.PI / 2 + TAU * progress); octx.stroke();
+  } else if (mode === 'zoom' && zoomSt) {
+    octx.strokeStyle = '#4dabf7'; octx.lineWidth = 4 * k;
+    octx.beginPath(); octx.moveTo(P[4].x, P[4].y); octx.lineTo(P[8].x, P[8].y); octx.stroke();
+    octx.fillStyle = '#4dabf7';
+    octx.beginPath(); octx.arc((P[4].x + P[8].x) / 2, (P[4].y + P[8].y) / 2, 7 * k, 0, TAU); octx.fill();
+  } else if (mode === 'rotate') {
+    octx.strokeStyle = '#c792ea'; octx.lineWidth = 4 * k;
+    octx.beginPath(); octx.arc(sm.x, sm.y, 16 * k, 0, TAU); octx.stroke();
+    octx.beginPath(); octx.moveTo(sm.x - 26 * k, sm.y); octx.lineTo(sm.x + 26 * k, sm.y);
+    octx.moveTo(sm.x, sm.y - 26 * k); octx.lineTo(sm.x, sm.y + 26 * k); octx.stroke();
+  } else if (mode === 'hover') {
+    octx.setLineDash([6 * k, 6 * k]);
+    octx.beginPath(); octx.arc(sm.x, sm.y, 12 * k, 0, TAU); octx.stroke();
+  } else {
+    octx.beginPath(); octx.arc(sm.x, sm.y, 9 * k, 0, TAU); octx.stroke();
+  }
+  octx.restore();
+}
+
+/* ================= نتیجه هر فریم ================= */
+function handLost() {
+  if (mode === 'zoom') rewindZoom();
+  lost = true;
+  lastPt = null; curStroke = null; sm = null; rotLast = null; zoomSt = null;
+  snapped = false; clearStart = 0; clearDone = false;
+  mode = pending = 'idle'; pendCount = 0;
+  chips.forEach(c => c.classList.remove('on'));
+  setMode('idle', 'دستی دیده نمی‌شود');
+}
+
+function onResults(res) {
+  const W = overC.width, H = overC.height;
+  octx.clearRect(0, 0, W, H);
+
+  const all = res.multiHandLandmarks || [];
+  if (!all.length) { handLost(); return; }
+  if (lost) { lost = false; setMode(mode, LABELS[mode]); }
+
+  const Ps = all.map(h => h.map(p => ({ x: p.x * W, y: p.y * H })));
+  if (showSkel) Ps.forEach(drawHand);
+
+  const P = Ps[0];
+  const hand = d(P[0], P[9]) || 1;                 // اندازه کف دست به پیکسل
+  const f = fingerState(P, hand);
+  chips.forEach(c => c.classList.toggle('on', !!f[c.dataset.f]));
+  hsSm = hsSm == null ? hand : hsSm + (hand - hsSm) * 0.25;
+
+  let raw = classify(f);
+  if (raw !== 'clear') clearDone = false;
+  if (raw === 'clear' && clearDone) raw = 'idle';
+
+  // حالت باید دو فریم پشت‌سرهم ثابت بماند (جلوگیری از پرش)
+  if (raw === pending) pendCount++; else { pending = raw; pendCount = 1; }
+  if (pendCount >= 2 && raw !== mode) {
+    if (mode === 'zoom') rewindZoom();
+    mode = raw;
+    lastPt = null; curStroke = null; sm = null; rotLast = null; snapped = false;
+    clearStart = mode === 'clear' ? performance.now() : 0;
+    if (mode === 'zoom') {
+      const fx = (P[4].x + P[8].x) / 2, fy = (P[4].y + P[8].y) / 2;
+      const r = Math.max(0.25, d(P[4], P[8]) / hand);
+      zoomSt = { fx, fy, r0: r, z0: V.zoom, q: unproj(fx, fy, 0), pan0: [V.px, V.py, V.pz] };
+      zoomHist = [];
+      rSm = r;
+    }
+    setMode(mode, LABELS[mode]);
+  }
+
+  // نشانگر: نوک اشاره، ولی در حالت چرخش نوک شست
+  const pi = mode === 'rotate' ? 4 : 8;
+  if (!sm) sm = { x: P[pi].x, y: P[pi].y };
+  else { sm.x += (P[pi].x - sm.x) * SMOOTH; sm.y += (P[pi].y - sm.y) * SMOOTH; }
+
+  let changed = false, progress = 0;
+
+  if (mode === 'draw') {
+    if (!curStroke) {
+      pushHistory();
+      curStroke = { p: [], w: size / V.zoom, c: color };
+      strokes.push(curStroke);
+    }
+    if (!lastPt || Math.hypot(sm.x - lastPt.x, sm.y - lastPt.y) >= 1.5) {
+      let zv = 0;
+      if (depthOn) {
+        if (depthRef == null) depthRef = hsSm;
+        zv = clamp((hsSm - depthRef) * DEPTH_GAIN, -F * 0.35, F * 0.35);
+      }
+      curStroke.p.push(unproj(sm.x, sm.y, zv));
+      lastPt = { x: sm.x, y: sm.y };
+      changed = true;
+    }
+  } else if (mode === 'erase') {
+    if (eraseAt(sm.x, sm.y, size * 2)) changed = true;
+  } else if (mode === 'zoom' && zoomSt) {
+    // فقط فریم‌هایی که واقعاً حالت زوم هستند اثر می‌گذارند (فریم‌های گذار نادیده گرفته می‌شوند)
+    if (raw === 'zoom') {
+      const r = d(P[4], P[8]) / hand;
+      rSm += (r - rSm) * 0.4;
+      V.zoom = clamp(zoomSt.z0 * (rSm / zoomSt.r0), ZOOM_MIN, ZOOM_MAX);
+      // نقطه‌ای که زیر انگشت‌ها بود سر جایش بماند
+      const t = unrot(zoomSt.fx - CX, zoomSt.fy - CY, 0);
+      V.px = zoomSt.q[0] - t[0] / V.zoom;
+      V.py = zoomSt.q[1] - t[1] / V.zoom;
+      V.pz = zoomSt.q[2] - t[2] / V.zoom;
+      const now = performance.now();
+      zoomHist.push({ t: now, zoom: V.zoom, px: V.px, py: V.py, pz: V.pz });
+      while (zoomHist.length && now - zoomHist[0].t > 1500) zoomHist.shift();
+      changed = true;
+    }
+  } else if (mode === 'rotate') {
+    if (rotLast) {
+      let dx = sm.x - rotLast.x;
+      const dy = sm.y - rotLast.y;
+      if (mirror) dx = -dx;                       // تصویر آینه‌ای است
+      V.yaw += dx * ROT_SPEED;
+      V.pitch = clamp(V.pitch + dy * ROT_SPEED, -1.45, 1.45);
+      changed = true;
+    }
+    rotLast = { x: sm.x, y: sm.y };
+  } else if (mode === 'clear') {
+    progress = Math.min(1, (performance.now() - clearStart) / CLEAR_HOLD);
+    if (progress >= 1) { clearAll(); clearDone = true; }
+  }
+
+  if (changed) render();
+  drawCursor(progress, P);
+}
+
+/* ================= حلقه اصلی ================= */
+async function loop() {
+  if (!running) return;
+  if (!busy && video.readyState >= 2) {
+    busy = true;
+    try { await hands.send({ image: video }); } catch (e) { console.error(e); if (!errShown) { errShown = true; setMode('idle', 'خطا در تشخیص: ' + (e.message || e)); } }
+    busy = false;
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ================= بارگذاری مدل (چند منبع، با زمان‌سنج و پیام خطا) ================= */
+const SOURCES = [
+  './mediapipe/',                                                       // نسخه آفلاین کنار فایل (اختیاری)
+  'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/',
+  'https://unpkg.com/@mediapipe/hands@0.4.1675469240/'
+];
+const withTimeout = (p, ms, name) => Promise.race([
+  p, new Promise((_, rej) => setTimeout(() => rej(new Error(name + ' timeout')), ms))
+]);
+const loadScript = src => new Promise((res, rej) => {
+  const s = document.createElement('script');
+  s.src = src; s.onload = res; s.onerror = () => rej(new Error('script: ' + src));
+  document.head.appendChild(s);
+});
+
+async function initHands() {
+  let lastErr = null;
+  for (const base of SOURCES) {
+    let h = null;
+    loadHost = base.startsWith('http') ? new URL(base).host : 'فایل محلی';
+    try {
+      if (!window.Hands) await withTimeout(loadScript(base + 'hands.js'), 12000, 'hands.js');
+      h = new Hands({ locateFile: f => base + f });
+      h.setOptions({
+        maxNumHands: MAX_HANDS,
+        modelComplexity: MODEL_LEVEL,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.5
+      });
+      h.onResults(onResults);
+      await withTimeout(h.initialize(), 60000, 'model');
+      return h;
+    } catch (e) {
+      lastErr = e; console.error(base, e);
+      try { h && h.close(); } catch (_) {}
+    }
+  }
+  throw lastErr || new Error('unknown');
+}
+
+$('go').onclick = async () => {
+  const msg = $('msg');
+  msg.textContent = '';
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    msg.textContent = 'دوربین فقط روی https یا localhost کار می‌کند. فایل را با یک سرور محلی باز کن.';
+    return;
+  }
+  $('go').disabled = true;
+  try {
+    await startCamera();
+  } catch (e) {
+    $('go').disabled = false;
+    msg.textContent = e.name === 'NotAllowedError'
+      ? 'اجازه دسترسی به دوربین داده نشد. از تنظیمات مرورگر اجازه بده و دوباره امتحان کن.'
+      : 'دوربین باز نشد: ' + e.message;
+    return;
+  }
+  $('start').hidden = true;
+  $('hud').hidden = false;
+  $('bar').hidden = false;
+
+  const t0 = Date.now();
+  const tick = setInterval(() => {
+    setMode('idle', 'در حال بارگذاری مدل از ' + loadHost + '… ' + Math.round((Date.now() - t0) / 1000) + ' ثانیه');
+  }, 1000);
+  setMode('idle', 'در حال بارگذاری مدل…');
+
+  try {
+    if (!hands) hands = await initHands();
+  } catch (e) {
+    clearInterval(tick);
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    $('start').hidden = false; $('hud').hidden = true; $('bar').hidden = true;
+    $('go').disabled = false;
+    msg.textContent = 'مدل دانلود نشد (' + (e.message || e) + '). اینترنت یا فیلتر را بررسی کن، یا مدل را آفلاین کنار فایل بگذار.';
+    return;
+  }
+  clearInterval(tick);
+  lost = true; errShown = false;
+  setMode('idle', 'دستی دیده نمی‌شود');
+  running = true;
+  loop();
+};
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(console.error));
+}
+</script>
+</body>
+</html>
