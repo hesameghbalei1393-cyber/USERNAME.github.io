@@ -1,0 +1,120 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  # شناسه‌ی بسته: بعد از انتشار در بازار/مایکت دیگر قابل تغییر نیست
+  APP_ID: com.eight8.airdraw
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Create Capacitor project
+        run: |
+          mkdir -p cap
+          cd cap
+          npm init -y
+          npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/share@7 @capacitor/filesystem@7 @capacitor/app-launcher@7
+          mkdir -p www
+          cp ../index.html ../manifest.json ../icon-192.png ../icon-512.png ../icon-maskable-512.png www/
+          npx cap init FingerDraw "$APP_ID" --web-dir www
+
+      - name: Bundle MediaPipe model (works offline)
+        run: |
+          cd cap
+          npm pack @mediapipe/hands@0.4.1675469240
+          mkdir -p www/mediapipe
+          tar xzf mediapipe-hands-0.4.1675469240.tgz -C www/mediapipe --strip-components=1
+          ls -la www/mediapipe
+
+      - name: Bundle Persian font (optional)
+        run: |
+          cd cap
+          mkdir -p www/fonts fontpkg
+          (cd fontpkg && npm pack vazirmatn >/dev/null 2>&1 && tar xzf vazirmatn-*.tgz) || echo "font package not available"
+          f=$(find fontpkg -iname '*.woff2' | grep -i 'wght' | head -1) || true
+          if [ -n "$f" ]; then cp "$f" www/fonts/Vazirmatn.woff2 && echo "font: $f"; else echo "font not found, using system font"; fi
+
+      - name: Add Android platform
+        run: |
+          cd cap
+          npx cap add android
+          sed -i 's|</manifest>|    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          find android/app/src/main/res -name 'ic_launcher*.png' -exec cp www/icon-192.png {} \;
+          sed -i 's#<string name="\(app_name\|title_activity_main\)">.*</string>#<string name="\1">نقاشی انگشتی</string>#' android/app/src/main/res/values/strings.xml
+          sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -n "versionCode\|versionName\|applicationId" android/app/build.gradle
+          npx cap sync android
+
+      - name: Prepare signing key
+        if: env.SIGNING_PASSWORD != ''
+        run: |
+          mkdir -p signing
+          if [ -f signing/release.jks.enc ]; then
+            echo "Using the existing encrypted key"
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in signing/release.jks.enc -out "$RUNNER_TEMP/release.jks" -pass env:SIGNING_PASSWORD
+          else
+            echo "Creating a new signing key"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" -storetype PKCS12 -alias airdraw -keyalg RSA -keysize 2048 -validity 10000 -storepass "$SIGNING_PASSWORD" -keypass "$SIGNING_PASSWORD" -dname "CN=Eight8, O=Eight8, C=IR"
+            openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -in "$RUNNER_TEMP/release.jks" -out signing/release.jks.enc -pass env:SIGNING_PASSWORD
+            git config user.name "github-actions"
+            git config user.email "actions@github.com"
+            git add signing/release.jks.enc
+            git commit -m "Add encrypted signing key"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
+      - name: Build signed release APK
+        if: env.SIGNING_PASSWORD != ''
+        run: |
+          cd cap/android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$BT/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass env:SIGNING_PASSWORD --key-pass env:SIGNING_PASSWORD --ks-key-alias airdraw --out "$GITHUB_WORKSPACE/AirDraw-release.apk" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" verify --verbose "$GITHUB_WORKSPACE/AirDraw-release.apk"
+
+      - name: Build debug APK (no signing password set)
+        if: env.SIGNING_PASSWORD == ''
+        run: |
+          cd cap/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/AirDraw-debug.apk"
+
+      - name: Upload APK (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirDraw-apk
+          path: AirDraw-*.apk
+
+      - name: Publish APK as a Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: AirDraw ${{ github.run_number }}
+          prerelease: ${{ env.SIGNING_PASSWORD == '' }}
+          files: AirDraw-*.apk

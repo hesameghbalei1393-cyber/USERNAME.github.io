@@ -2,302 +2,875 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>نقاشی سه‌بعدی با انگشت</title>
-<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>نقاشی انگشتی — Eight⁸</title>
+<meta name="theme-color" content="#07090d">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
+  @font-face{font-family:Vazirmatn;src:url('fonts/Vazirmatn.woff2') format('woff2');font-weight:100 900;font-display:swap}
   :root{
-    --bg:#0f1115; --panel:rgba(18,20,26,.76); --line:rgba(255,255,255,.14);
-    --text:#f2f3f5; --dim:#9aa0ab; --accent:#3ddc97;
+    --bg:#07090d; --s1:rgba(255,255,255,.05); --s2:rgba(255,255,255,.09); --bd:rgba(255,255,255,.10);
+    --tx:#f4f6fa; --dim:#98a1b3; --ac:#3ddc97; --ac2:#4dabf7; --danger:#ff5d7a;
+    --grad:linear-gradient(135deg,#3ddc97,#4dabf7); --r:18px;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   [hidden]{display:none!important}
-  html,body{height:100%;background:#000;color:var(--text);overflow:hidden;
-    overscroll-behavior:none;touch-action:manipulation;
-    font-family:Vazirmatn,system-ui,Tahoma,sans-serif}
+  html,body{height:100%;background:var(--bg);color:var(--tx);overflow:hidden;overscroll-behavior:none;
+    font-family:Vazirmatn,system-ui,"Noto Sans Arabic",Tahoma,sans-serif;
+    -webkit-user-select:none;user-select:none;touch-action:manipulation}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  input,summary{font:inherit}
+  i[data-i]{display:inline-flex;align-items:center;justify-content:center}
+  svg.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  input[type=range]{accent-color:var(--ac)}
+  .brand{font-weight:800;letter-spacing:.3px;unicode-bidi:isolate}
+  .brand sup{font-size:.62em;vertical-align:super}
 
-  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  /* ---------- صفحه‌ها ---------- */
+  .screen{position:fixed;inset:0;display:none;overflow-y:auto;overflow-x:hidden;
+    padding:calc(env(safe-area-inset-top,0px) + 16px) 18px calc(env(safe-area-inset-bottom,0px) + 28px);
+    -webkit-user-select:none;user-select:none}
+  .screen.active{display:block;animation:fadeIn .28s ease-out}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}}
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .top h2{font-size:21px;font-weight:800}
+  .back{width:42px;height:42px;border-radius:14px;background:var(--s1);border:1px solid var(--bd);
+    display:grid;place-items:center;flex:none}
+  .back:active{background:var(--s2)}
+  .sec{font-size:14px;color:var(--dim);margin:22px 4px 10px;font-weight:600}
+
+  /* ---------- شروع (Splash) ---------- */
+  #splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;transition:opacity .55s}
+  #splash.hide{opacity:0;pointer-events:none}
+  .sp-in{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .sp-logo{width:150px;height:150px}
+  .sp-logo .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:dr 1.3s .1s ease forwards}
+  .sp-logo .dot{opacity:0;animation:pop .35s 1.3s ease forwards;transform-origin:35.2px 39.1px}
+  @keyframes dr{to{stroke-dashoffset:0}}
+  @keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+  .sp-in h1{font-size:30px;font-weight:800;margin-top:10px;opacity:0;animation:up .5s .9s ease forwards}
+  .sp-in p{color:var(--dim);letter-spacing:2px;font-size:13px;opacity:0;animation:up .5s 1.1s ease forwards}
+  @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .sp-foot{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);color:var(--dim);font-size:15px;
+    opacity:0;animation:up .5s 1.4s ease forwards}
+
+  /* ---------- خانه ---------- */
+  #scr-home{background:
+    radial-gradient(120% 60% at 50% -8%,rgba(77,171,247,.22),transparent 60%),
+    radial-gradient(90% 50% at 95% 8%,rgba(61,220,151,.14),transparent 55%),var(--bg)}
+  .hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:22px 0 8px}
+  .logo{width:112px;height:112px;border-radius:32px;display:grid;place-items:center;
+    background:linear-gradient(160deg,#1c212c,#0b0d12);border:1px solid var(--bd);
+    box-shadow:0 18px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
+  .hero h1{font-size:29px;margin-top:16px;font-weight:800}
+  .hero p{color:var(--dim);font-size:14.5px;margin-top:8px;line-height:1.9}
+  .cta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:17px;margin:20px 0 14px;
+    border-radius:20px;background:var(--grad);color:#06140d;font-weight:800;font-size:18px;
+    box-shadow:0 14px 34px rgba(61,220,151,.26)}
+  .cta:active{transform:scale(.985)}
+  .cta svg.ic{stroke-width:2.4}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{display:flex;flex-direction:column;gap:9px;align-items:flex-start;text-align:right;padding:16px;
+    border-radius:var(--r);background:var(--s1);border:1px solid var(--bd)}
+  .card:active{background:var(--s2)}
+  .card b{font-size:16px}
+  .card small{color:var(--dim);font-size:12.5px;line-height:1.7}
+  .ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--s2);color:var(--ac)}
+  .foot{margin-top:26px;text-align:center;color:var(--dim);font-size:12.5px;line-height:2}
+
+  /* ---------- راهنما ---------- */
+  .gcard{display:flex;gap:14px;align-items:center;padding:14px;border-radius:var(--r);background:var(--s1);
+    border:1px solid var(--bd);margin-bottom:10px}
+  .gem{font-size:32px;width:58px;height:58px;border-radius:16px;background:var(--s2);display:grid;place-items:center;flex:none}
+  .gcard b{font-size:15.5px}
+  .gcard p{color:var(--dim);font-size:13px;line-height:1.8;margin-top:3px}
+  .tips{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .tips li{position:relative;padding:12px 40px 12px 14px;border-radius:14px;background:var(--s1);border:1px solid var(--bd);
+    font-size:13.5px;line-height:1.8}
+  .tips li::before{content:'';position:absolute;right:15px;top:19px;width:10px;height:10px;border-radius:50%;background:var(--grad)}
+  details{border-radius:16px;background:var(--s1);border:1px solid var(--bd);margin-bottom:9px;overflow:hidden}
+  summary{padding:14px 16px;font-size:14.5px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:'+';color:var(--ac);font-size:20px;line-height:1}
+  details[open] summary::after{content:'−'}
+  details p{padding:0 16px 14px;color:var(--dim);font-size:13.5px;line-height:1.9}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:16px;
+    background:var(--grad);color:#06140d;font-weight:800;font-size:16px;margin-top:16px}
+  .btn.ghost{background:var(--s1);color:var(--tx);border:1px solid var(--bd);font-weight:600}
+  .btn.danger{background:rgba(255,93,122,.14);color:var(--danger);border:1px solid rgba(255,93,122,.35)}
+
+  /* ---------- گالری ---------- */
+  #galGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .thumb{display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:var(--s1);border:1px solid var(--bd);text-align:right}
+  .thumb img{width:100%;display:block;background:#000;aspect-ratio:4/3;object-fit:cover}
+  .thumb span{padding:8px 12px;font-size:12px;color:var(--dim)}
+  .empty{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;color:var(--dim);
+    padding:60px 20px;line-height:1.9;font-size:14px}
+  .empty .ico{width:64px;height:64px;border-radius:20px}
+  .empty svg.ic{width:30px;height:30px}
+
+  /* ---------- تنظیمات و درباره ---------- */
+  .row{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:var(--s1);
+    border:1px solid var(--bd);margin-bottom:10px;width:100%;text-align:right}
+  button.row:active{background:var(--s2)}
+  .row .t{flex:1;min-width:0}
+  .row .t b{display:block;font-size:14.5px;font-weight:600}
+  .row .t small{display:block;color:var(--dim);font-size:12.5px;margin-top:3px;line-height:1.7}
+  .row .ltr{direction:ltr;text-align:right;unicode-bidi:isolate}
+  .row.col{flex-direction:column;align-items:stretch;gap:8px}
+  .row.col .line{display:flex;justify-content:space-between;font-size:14.5px;font-weight:600}
+  .row.col .line small{color:var(--dim);font-weight:400;font-size:12px}
+  .sw{position:relative;width:48px;height:28px;border-radius:99px;background:var(--s2);border:1px solid var(--bd);flex:none;transition:.2s}
+  .sw::after{content:'';position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#cfd6e4;transition:.2s}
+  .sw.on{background:var(--grad);border-color:transparent}
+  .sw.on::after{right:25px;background:#06140d}
+  .about-hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0 4px}
+  .about-hero .logo{width:96px;height:96px;border-radius:28px}
+  .about-hero h3{font-size:22px;margin-top:12px;font-weight:800}
+  .about-hero small{color:var(--dim);font-size:13px;margin-top:4px}
+  .about-tx{font-size:14px;line-height:2;color:#cfd6e4;padding:4px 4px 0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .two .row{margin:0;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:14px 8px;font-size:13.5px}
+  .credit{color:var(--dim);font-size:12.5px;line-height:2;text-align:center;margin-top:18px}
+
+  /* ---------- صفحه نقاشی ---------- */
+  #scr-play{overflow:hidden;padding:0;background:#000}
+  #stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
   #view{position:relative;width:100%;height:100%}
   #view.mirror{transform:scaleX(-1)}
   #view video,#view canvas{position:absolute;inset:0;width:100%;height:100%}
   #video{object-fit:fill;background:#000;opacity:0}
   #view.cam #video{opacity:1}
-
-  #hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;
-    display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
-  .pill{background:var(--panel);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
-    border:1px solid var(--line);border-radius:999px}
-  #mode{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:15px}
-  #mode i{width:10px;height:10px;border-radius:50%;background:var(--dim)}
-  #mode[data-m=draw] i{background:var(--accent)}
+  #hud{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;display:flex;
+    flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:5}
+  #hudTop{display:flex;align-items:center;gap:8px;width:100%}
+  #hudTop .back{pointer-events:auto;background:rgba(18,20,26,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .hud-sp{width:42px;flex:none}
+  .pill{background:rgba(18,20,26,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    border:1px solid var(--bd);border-radius:999px}
+  #mode{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;font-size:14px}
+  #mode i{width:10px;height:10px;border-radius:50%;background:var(--dim);flex:none}
+  #modeText{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #mode[data-m=draw] i{background:var(--ac)}
   #mode[data-m=erase] i{background:#ffb84d}
   #mode[data-m=clear] i{background:#ff4d6d}
   #mode[data-m=zoom] i{background:#4dabf7}
   #mode[data-m=rotate] i{background:#c792ea}
   #fingers{display:flex;gap:6px;padding:6px 8px}
-  #fingers span{font-size:12px;padding:4px 9px;border-radius:999px;color:var(--dim);
-    background:rgba(255,255,255,.06)}
-  #fingers span.on{background:var(--accent);color:#08140e;font-weight:700}
+  #fingers span{font-size:12px;padding:4px 9px;border-radius:999px;color:var(--dim);background:rgba(255,255,255,.06)}
+  #fingers span.on{background:var(--ac);color:#08140e;font-weight:700}
 
-  #bar{position:fixed;left:0;right:0;bottom:0;padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 12px);
-    background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-    border-top:1px solid var(--line);border-radius:18px 18px 0 0;display:flex;flex-direction:column;gap:10px}
-  #row1{display:flex;align-items:center;gap:14px}
-  #colors{display:flex;gap:10px}
-  #colors button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;
-    outline:1px solid var(--line)}
-  #colors button.sel{border-color:#fff}
-  #size{flex:1;accent-color:var(--accent)}
-  #btns{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-  #btns button{padding:6px 2px;min-height:44px;line-height:1.35;font:inherit;font-size:11.5px;color:var(--text);
-    background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px}
-  #btns button[aria-pressed=true]{border-color:var(--accent)}
-  #btns button:active{background:rgba(255,255,255,.16)}
+  #dock{position:absolute;left:0;right:0;bottom:0;z-index:6;padding:12px 14px calc(env(safe-area-inset-bottom,0px) + 8px);
+    background:rgba(10,12,17,.8);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    border-top:1px solid var(--bd);border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:10px}
+  #colors{display:flex;justify-content:space-between;align-items:center}
+  .sc{width:30px;height:30px;border-radius:50%;border:2px solid transparent;outline:1px solid var(--bd);flex:none;transition:transform .15s}
+  .sc.sel{border-color:#fff;transform:scale(1.15)}
+  .sc.custom{background:conic-gradient(#ff4d6d,#ffd23f,#3ddc97,#4dabf7,#a78bfa,#ff4d6d);position:relative;overflow:hidden}
+  .sc.custom input{position:absolute;inset:-8px;width:46px;height:46px;opacity:0}
+  #sizeRow{display:flex;align-items:center;gap:12px;color:var(--dim);font-size:12px}
+  #size{flex:1}
+  #tools{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+  .tool{display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 2px;border-radius:14px;font-size:11.5px;color:var(--dim)}
+  .tool:active{background:var(--s2)}
+  .tool.on{color:var(--ac)}
 
-  #start{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:20px;padding:24px;text-align:center;overflow:auto}
-  #start h1{font-size:25px}
-  #guide{list-style:none;display:flex;flex-direction:column;gap:9px;font-size:14.5px;line-height:1.7;
-    max-width:350px;text-align:right}
-  #guide b{color:var(--accent)}
-  #go{font:inherit;font-size:17px;font-weight:700;padding:14px 34px;border:0;border-radius:14px;
-    background:var(--accent);color:#08140e}
-  #msg{color:#ff8a9b;font-size:14px;line-height:1.7;max-width:340px;min-height:1.5em}
+  .sheet{position:absolute;inset:0;z-index:30;display:flex;align-items:flex-end}
+  .sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+  .sheet-body{position:relative;width:100%;background:#12151c;border-radius:24px 24px 0 0;border:1px solid var(--bd);
+    padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 18px);animation:sl .22s ease-out}
+  @keyframes sl{from{transform:translateY(30px);opacity:0}}
+  .grab{width:42px;height:4px;border-radius:9px;background:var(--s2);margin:2px auto 14px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px 4px;border-radius:16px;
+    background:var(--s1);border:1px solid var(--bd);font-size:12px;text-align:center;line-height:1.5}
+  .tile:active{background:var(--s2)}
+  .tile.on{border-color:var(--ac);background:rgba(61,220,151,.12);color:var(--ac)}
+
+  #gate{position:absolute;inset:0;z-index:20;background:rgba(7,9,13,.94);display:flex;align-items:center;justify-content:center;
+    padding:24px;text-align:center}
+  .gbox{width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .gbox h3{font-size:20px}
+  .gbox p{color:var(--dim);font-size:14px;line-height:1.9}
+  .spin{width:46px;height:46px;border-radius:50%;border:4px solid var(--s2);border-top-color:var(--ac);animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .mini{list-style:none;width:100%;display:flex;flex-direction:column;gap:8px;text-align:right}
+  .mini li{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--s1);border:1px solid var(--bd);
+    font-size:13.5px;line-height:1.7}
+  .mini li span{font-size:24px;flex:none}
+
+  /* ---------- پنجره‌ها ---------- */
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.74);display:flex;align-items:center;justify-content:center;padding:20px}
+  .mcard{width:100%;max-width:420px;background:#12151c;border:1px solid var(--bd);border-radius:22px;padding:16px;
+    max-height:92vh;overflow:auto}
+  .mcard img{width:100%;border-radius:14px;display:block;background:#000}
+  .mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .mrow .btn{margin:0;padding:12px;font-size:14.5px}
+  .mcard p{font-size:15px;line-height:1.9;text-align:center;padding:8px 6px 4px}
+  #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 120px);transform:translateX(-50%);z-index:90;
+    background:rgba(24,28,37,.96);border:1px solid var(--bd);padding:10px 18px;border-radius:99px;font-size:14px;
+    opacity:0;pointer-events:none;transition:opacity .25s;max-width:88vw;text-align:center}
+  #toast.show{opacity:1}
 </style>
 </head>
 <body>
 
-<div id="stage">
-  <div id="view">
-    <video id="video" playsinline muted autoplay></video>
-    <canvas id="draw"></canvas>
-    <canvas id="over"></canvas>
+<!-- نماد برنامه (یک‌بار تعریف و در جاهای مختلف استفاده می‌شود) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="82" y1="50" x2="18" y2="50">
+      <stop offset="0" stop-color="#ff4d6d"/><stop offset=".35" stop-color="#ffd23f"/>
+      <stop offset=".65" stop-color="#3ddc97"/><stop offset="1" stop-color="#4dabf7"/>
+    </linearGradient>
+    <symbol id="mark" viewBox="0 0 100 100">
+      <path d="M63.8 60.3 L66.6 61.9 L69.2 63.2 L71.5 64.1 L73.6 64.6 L75.4 64.5 L77.0 64.0 L78.2 63.0 L79.2 61.6 L79.8 59.7 L80.2 57.4 L80.2 54.8 L80.0 51.9 L79.6 48.8 L78.9 45.6 L78.0 42.3 L76.9 39.0 L75.6 35.9 L74.3 32.9 L72.8 30.2 L71.2 27.8 L69.7 25.8 L68.0 24.3 L66.4 23.3 L64.8 22.8 L63.2 22.9 L61.7 23.5 L60.2 24.7 L58.8 26.4 L57.4 28.6 L56.1 31.3 L54.8 34.4 L53.6 37.8 L52.5 41.5 L51.3 45.3 L50.2 49.3 L49.1 53.3 L47.9 57.2 L46.8 61.0 L45.6 64.5 L44.3 67.7 L43.1 70.5 L41.7 72.9 L40.3 74.8 L38.8 76.2 L37.3 77.0 L35.8 77.2 L34.1 76.9 L32.5 76.1 L30.9 74.8 L29.3 72.9 L27.7 70.7 L26.2 68.1 L24.8 65.2 L23.5 62.1 L22.4 58.8 L21.4 55.5 L20.6 52.3 L20.1 49.1 L19.8 46.1 L19.8 43.4 L20.0 41.0 L20.6 39.0 L21.4 37.4 L22.6 36.3 L24.0 35.6 L25.7 35.4 L27.7 35.7 L30.0 36.4 L32.5 37.6 L35.2 39.1"
+        fill="none" stroke="url(#lg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="35.2" cy="39.1" r="5.5" fill="#fff"/><circle cx="35.2" cy="39.1" r="3" fill="#4dabf7"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ======================= Splash ======================= -->
+<div id="splash">
+  <div class="sp-in">
+    <svg class="sp-logo" viewBox="0 0 100 100" aria-hidden="true">
+      <path class="draw" pathLength="1" fill="none" stroke="url(#lg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"
+        d="M63.8 60.3 L66.6 61.9 L69.2 63.2 L71.5 64.1 L73.6 64.6 L75.4 64.5 L77.0 64.0 L78.2 63.0 L79.2 61.6 L79.8 59.7 L80.2 57.4 L80.2 54.8 L80.0 51.9 L79.6 48.8 L78.9 45.6 L78.0 42.3 L76.9 39.0 L75.6 35.9 L74.3 32.9 L72.8 30.2 L71.2 27.8 L69.7 25.8 L68.0 24.3 L66.4 23.3 L64.8 22.8 L63.2 22.9 L61.7 23.5 L60.2 24.7 L58.8 26.4 L57.4 28.6 L56.1 31.3 L54.8 34.4 L53.6 37.8 L52.5 41.5 L51.3 45.3 L50.2 49.3 L49.1 53.3 L47.9 57.2 L46.8 61.0 L45.6 64.5 L44.3 67.7 L43.1 70.5 L41.7 72.9 L40.3 74.8 L38.8 76.2 L37.3 77.0 L35.8 77.2 L34.1 76.9 L32.5 76.1 L30.9 74.8 L29.3 72.9 L27.7 70.7 L26.2 68.1 L24.8 65.2 L23.5 62.1 L22.4 58.8 L21.4 55.5 L20.6 52.3 L20.1 49.1 L19.8 46.1 L19.8 43.4 L20.0 41.0 L20.6 39.0 L21.4 37.4 L22.6 36.3 L24.0 35.6 L25.7 35.4 L27.7 35.7 L30.0 36.4 L32.5 37.6 L35.2 39.1"/>
+      <g class="dot"><circle cx="35.2" cy="39.1" r="5.5" fill="#fff"/><circle cx="35.2" cy="39.1" r="3" fill="#4dabf7"/></g>
+    </svg>
+    <h1>نقاشی انگشتی</h1>
+    <p>AIR DRAW 3D</p>
   </div>
+  <div class="sp-foot"><span class="brand" dir="ltr">Eight<sup>8</sup></span></div>
 </div>
 
-<div id="hud" hidden>
-  <div id="mode" class="pill" data-m="idle"><i></i><span id="modeText"></span></div>
-  <div id="fingers" class="pill">
-    <span data-f="thumb">شست</span>
-    <span data-f="index">اشاره</span>
-    <span data-f="middle">وسط</span>
-    <span data-f="ring">حلقه</span>
-    <span data-f="pinky">کوچک</span>
+<!-- ======================= خانه ======================= -->
+<section id="scr-home" class="screen active">
+  <div class="hero">
+    <div class="logo"><svg viewBox="0 0 100 100" width="80" height="80" aria-hidden="true"><use href="#mark"/></svg></div>
+    <h1>نقاشی انگشتی</h1>
+    <p>با حرکت انگشت‌ها جلوی دوربین در هوا نقاشی کن،<br>زوم کن و نقاشی را سه‌بعدی بچرخان.</p>
   </div>
-</div>
+  <button class="cta" id="btnStart"><i data-i="play"></i><span>شروع نقاشی</span></button>
+  <div class="grid2">
+    <button class="card" data-go="guide"><span class="ico"><i data-i="book"></i></span><b>راهنما</b><small>یادگیری حرکت‌های دست</small></button>
+    <button class="card" data-go="gallery"><span class="ico"><i data-i="image"></i></span><b>گالری من</b><small><span id="galCount">۰</span> نقاشی ذخیره‌شده</small></button>
+    <button class="card" data-go="settings"><span class="ico"><i data-i="sliders"></i></span><b>تنظیمات</b><small>ظاهر و حساسیت</small></button>
+    <button class="card" data-go="about"><span class="ico"><i data-i="info"></i></span><b>درباره ما</b><small>ارتباط و بازخورد</small></button>
+  </div>
+  <div class="foot">ساخته‌شده توسط <span class="brand" dir="ltr">Eight<sup>8</sup></span><br>نسخه <span id="verHome"></span></div>
+</section>
 
-<div id="bar" hidden>
-  <div id="row1">
-    <div id="colors"></div>
-    <input id="size" type="range" min="2" max="26" value="8" aria-label="ضخامت قلم">
-  </div>
-  <div id="btns">
-    <button id="pen" aria-pressed="true">نقاشی: روشن</button>
-    <button id="undo">برگردان</button>
-    <button id="resetv">بازنشانی نما</button>
-    <button id="depth" aria-pressed="false">عمق: خاموش</button>
-    <button id="skel" aria-pressed="true">اسکلت</button>
-    <button id="cam" aria-pressed="false">نمایش دوربین</button>
-    <button id="flip">جلو/عقب</button>
-    <button id="save">ذخیره</button>
-    <button id="clear">پاک</button>
-  </div>
-</div>
+<!-- ======================= راهنما ======================= -->
+<section id="scr-guide" class="screen">
+  <div class="top"><button class="back" data-back aria-label="بازگشت"><i data-i="back"></i></button><h2>راهنما</h2></div>
 
-<div id="start">
-  <h1>نقاشی سه‌بعدی با انگشت</h1>
-  <ul id="guide">
-    <li><b>فقط اشاره بالا (شست جمع):</b> نقاشی</li>
-    <li><b>اشاره + وسط:</b> پاک‌کن</li>
-    <li><b>شست + اشاره باز، بقیه بسته:</b> زوم. انگشت‌ها را از هم دور کن = زوم این، نزدیک کن = زوم اوت. وقتی از این حالت خارج شوی، اندازه همان‌جا که بود می‌ماند</li>
-    <li><b>فقط شست باز، بقیه مشت:</b> با حرکت شست، نقاشی را بچرخان و برو پشتش</li>
-    <li><b>کف دست باز (حدود یک ثانیه):</b> پاک کردن همه (با «برگردان» برمی‌گردد)</li>
-    <li><b>مشت:</b> فقط نشانگر، بدون نقاشی</li>
+  <div class="sec" style="margin-top:0">حرکت‌های دست</div>
+  <div class="gcard"><div class="gem">☝️</div><div><b>نقاشی</b><p>فقط انگشت اشاره را بالا بگیر و شست را جمع کن. نوک انگشت، قلم توست.</p></div></div>
+  <div class="gcard"><div class="gem">✌️</div><div><b>پاک‌کن</b><p>انگشت اشاره و وسط را باز کن و روی جاهایی که می‌خواهی پاک شود ببر.</p></div></div>
+  <div class="gcard"><div class="gem">🤏</div><div><b>زوم</b><p>شست و اشاره را باز کن، بقیه را ببند. انگشت‌ها را از هم دور کنی نقاشی بزرگ می‌شود و نزدیک کنی کوچک.</p></div></div>
+  <div class="gcard"><div class="gem">👍</div><div><b>چرخش سه‌بعدی</b><p>فقط شست را باز کن و بقیه را مشت کن. شست را حرکت بده تا نقاشی بچرخد و پشتش را ببینی.</p></div></div>
+  <div class="gcard"><div class="gem">🖐️</div><div><b>پاک کردن همه</b><p>کف دست را باز کن و حدود یک ثانیه نگه دار. با دکمه‌ی «برگردان» برمی‌گردد.</p></div></div>
+  <div class="gcard"><div class="gem">✊</div><div><b>مکث</b><p>مشت کن تا فقط نشانگر دیده شود و چیزی کشیده نشود.</p></div></div>
+
+  <div class="sec">برای بهترین نتیجه</div>
+  <ul class="tips">
+    <li>در نور کافی کار کن و دست را حدود ۳۰ تا ۶۰ سانتی‌متر از دوربین نگه دار.</li>
+    <li>پس‌زمینه‌ی ساده و بدون شلوغی، تشخیص را بهتر می‌کند.</li>
+    <li>قبل از رها کردن حالت زوم، یک لحظه مکث کن تا اندازه دقیق بماند.</li>
+    <li>برای ساخت شکل سه‌بعدی: یک بخش بکش، با شست بچرخان و بخش بعدی را از زاویه‌ی دیگر بکش.</li>
+    <li>حالت «تقارن آینه‌ای» را از منوی «بیشتر» روشن کن تا هر خط خودش قرینه شود.</li>
   </ul>
-  <button id="go">شروع دوربین</button>
-  <p id="msg"></p>
+
+  <div class="sec">سؤال‌های پرتکرار</div>
+  <details><summary>دست من تشخیص داده نمی‌شود، چه کنم؟</summary><p>مطمئن شو دست کاملاً داخل قاب است، نور کافی وجود دارد و کف یا پشت دست رو به دوربین است. اگر باز هم مشکل داشتی، دوربین را با دکمه‌ی «جلو/عقب» عوض کن.</p></details>
+  <details><summary>آیا به اینترنت نیاز دارم؟</summary><p>نه. تشخیص دست کاملاً روی گوشی خودت انجام می‌شود.</p></details>
+  <details><summary>نقاشی‌هایم کجا ذخیره می‌شوند؟</summary><p>با دکمه‌ی «ذخیره» در «گالری من» داخل برنامه می‌مانند و بعداً می‌توانی دوباره ویرایششان کنی. برای فرستادن تصویر به گالری گوشی یا پیام‌رسان‌ها، از منوی «بیشتر» گزینه‌ی «اشتراک‌گذاری» را بزن.</p></details>
+  <details><summary>چرا خط‌ها بعد از چرخش جلوتر و عقب‌تر دیده می‌شوند؟</summary><p>نقاشی‌ها سه‌بعدی ذخیره می‌شوند. اگر «عمق با دست» روشن باشد، نزدیک و دور کردن دست هم روی عمق خط اثر می‌گذارد.</p></details>
+  <button class="btn" data-go="play"><i data-i="play"></i><span>شروع تمرین</span></button>
+</section>
+
+<!-- ======================= گالری ======================= -->
+<section id="scr-gallery" class="screen">
+  <div class="top"><button class="back" data-back aria-label="بازگشت"><i data-i="back"></i></button><h2>گالری من</h2></div>
+  <div id="galEmpty" class="empty" hidden>
+    <span class="ico"><i data-i="image"></i></span>
+    <b>هنوز نقاشی‌ای ذخیره نکرده‌ای</b>
+    <span>وقتی نقاشی‌ات را با دکمه‌ی «ذخیره» نگه داری، اینجا دیده می‌شود.</span>
+    <button class="btn" data-go="play" style="max-width:260px"><i data-i="play"></i><span>شروع نقاشی</span></button>
+  </div>
+  <div id="galGrid"></div>
+</section>
+
+<!-- ======================= تنظیمات ======================= -->
+<section id="scr-settings" class="screen">
+  <div class="top"><button class="back" data-back aria-label="بازگشت"><i data-i="back"></i></button><h2>تنظیمات</h2></div>
+
+  <div class="sec" style="margin-top:0">ظاهر</div>
+  <div class="row"><div class="t"><b>نمایش تصویر دوربین</b><small>خاموش: پس‌زمینه‌ی مشکی</small></div><button class="sw" role="switch" data-set="showCam" aria-label="نمایش دوربین"></button></div>
+  <div class="row"><div class="t"><b>اسکلت دست</b><small>نمایش نقطه‌های تشخیص انگشت‌ها</small></div><button class="sw" role="switch" data-set="skeleton" aria-label="اسکلت دست"></button></div>
+  <div class="row"><div class="t"><b>افکت نئون</b><small>درخشش دور خط‌ها</small></div><button class="sw" role="switch" data-set="glow" aria-label="افکت نئون"></button></div>
+  <div class="row"><div class="t"><b>شبکه‌ی راهنما</b><small>برای تشخیص بهتر زاویه‌ی چرخش</small></div><button class="sw" role="switch" data-set="grid" aria-label="شبکه"></button></div>
+  <div class="row"><div class="t"><b>نشان <span class="brand" dir="ltr">Eight<sup>8</sup></span> روی تصویر</b><small>در گوشه‌ی تصویرهای خروجی</small></div><button class="sw" role="switch" data-set="watermark" aria-label="نشان روی تصویر"></button></div>
+
+  <div class="sec">حساسیت</div>
+  <div class="row col"><div class="line"><span>سرعت چرخش</span><small>آهسته ← سریع</small></div>
+    <input type="range" min="0.4" max="2.4" step="0.1" data-set="rotSpeed" aria-label="سرعت چرخش"></div>
+  <div class="row col"><div class="line"><span>نرمی نشانگر</span><small>نرم ← سریع</small></div>
+    <input type="range" min="0.25" max="0.9" step="0.05" data-set="smooth" aria-label="نرمی نشانگر"></div>
+
+  <div class="sec">داده‌ها</div>
+  <button class="btn ghost" id="btnResetSet" style="margin-top:0"><span>بازگرداندن تنظیمات به حالت اول</span></button>
+  <button class="btn danger" id="btnClearGal"><i data-i="trash"></i><span>پاک کردن همه‌ی نقاشی‌های گالری</span></button>
+</section>
+
+<!-- ======================= درباره ما ======================= -->
+<section id="scr-about" class="screen">
+  <div class="top"><button class="back" data-back aria-label="بازگشت"><i data-i="back"></i></button><h2>درباره ما</h2></div>
+
+  <div class="about-hero">
+    <div class="logo"><svg viewBox="0 0 100 100" width="66" height="66" aria-hidden="true"><use href="#mark"/></svg></div>
+    <h3>نقاشی انگشتی</h3>
+    <small>نسخه <span id="verAbout"></span></small>
+  </div>
+  <p class="about-tx" style="margin-top:14px"><span class="brand" dir="ltr">Eight<sup>8</sup></span> مجموعه‌ای برای ساخت برنامه‌های خلاقانه و کاربردی است. این برنامه با هدف ساده‌تر کردن نقاشی و طراحی با حرکت دست ساخته شده. نظر، ایده یا مشکلی داشتی، خوشحال می‌شویم بشنویم.</p>
+
+  <div class="sec">ارتباط با ما</div>
+  <button class="row" data-ext="https://rubika.ir/Studio_Eight8"><span class="ico"><i data-i="send"></i></span><span class="t"><b>کانال روبیکا</b><small class="ltr">@Studio_Eight8</small></span></button>
+  <button class="row" data-copy="@Hesam23799"><span class="ico"><i data-i="user"></i></span><span class="t"><b>ارتباط با توسعه‌دهنده</b><small class="ltr">@Hesam23799</small></span><i data-i="copy"></i></button>
+  <button class="row" id="btnMail"><span class="ico"><i data-i="mail"></i></span><span class="t"><b>ارسال بازخورد با ایمیل</b><small class="ltr">hesameghbalei1391@gmail.com</small></span></button>
+
+  <div class="sec">حمایت از ما</div>
+  <div class="two">
+    <button class="row" id="rateBazaar"><i data-i="star"></i><span>امتیاز در کافه‌بازار</span></button>
+    <button class="row" id="rateMyket"><i data-i="star"></i><span>امتیاز در مایکت</span></button>
+  </div>
+  <button class="row" id="btnShareApp"><span class="ico"><i data-i="share"></i></span><span class="t"><b>معرفی برنامه به دوستان</b><small>ارسال لینک کانال ما</small></span></button>
+
+  <div class="sec">حریم خصوصی</div>
+  <details><summary>برنامه با اطلاعات من چه می‌کند؟</summary>
+    <p>تصویر دوربین فقط روی گوشی خودت پردازش می‌شود. هیچ عکس یا ویدیویی ذخیره یا ارسال نمی‌شود. نقاشی‌هایی که خودت ذخیره می‌کنی فقط روی همین دستگاه می‌مانند. برنامه اطلاعات شخصی جمع نمی‌کند و ثبت‌نام هم لازم ندارد. تصویری را هم فقط وقتی بفرستد که خودت از منوی «اشتراک‌گذاری» انتخاب کنی.</p></details>
+  <details><summary>مجوزهای برنامه</summary>
+    <p>دوربین: فقط برای دیدن دست تو و نقاشی کردن با آن. برنامه به هیچ مجوز دیگری نیاز ندارد.</p></details>
+
+  <p class="credit">تشخیص دست با MediaPipe Hands (Google، مجوز Apache 2.0)<br>فونت وزیرمتن (مجوز OFL)<br>© ۲۰۲۶ <span class="brand" dir="ltr">Eight<sup>8</sup></span></p>
+</section>
+
+<!-- ======================= صفحه نقاشی ======================= -->
+<section id="scr-play" class="screen">
+  <div id="stage">
+    <div id="view">
+      <video id="video" playsinline muted autoplay></video>
+      <canvas id="draw"></canvas>
+      <canvas id="over"></canvas>
+    </div>
+  </div>
+
+  <div id="hud">
+    <div id="hudTop">
+      <button class="back" data-back aria-label="بازگشت"><i data-i="back"></i></button>
+      <div id="mode" class="pill" data-m="idle"><i></i><span id="modeText"></span></div>
+      <span class="hud-sp"></span>
+    </div>
+    <div id="fingers" class="pill">
+      <span data-f="thumb">شست</span><span data-f="index">اشاره</span><span data-f="middle">وسط</span><span data-f="ring">حلقه</span><span data-f="pinky">کوچک</span>
+    </div>
+  </div>
+
+  <div id="dock">
+    <div id="colors"></div>
+    <div id="sizeRow"><span>قلم</span><input id="size" type="range" min="2" max="26" value="8" aria-label="ضخامت قلم"></div>
+    <div id="tools">
+      <button class="tool on" id="tPen"><i data-i="pencil"></i><span id="tPenTx">نقاشی</span></button>
+      <button class="tool" id="tUndo"><i data-i="undo"></i><span>برگردان</span></button>
+      <button class="tool" id="tClear"><i data-i="trash"></i><span>پاک</span></button>
+      <button class="tool" id="tSave"><i data-i="save"></i><span>ذخیره</span></button>
+      <button class="tool" id="tMore"><i data-i="more"></i><span>بیشتر</span></button>
+    </div>
+  </div>
+
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-bg" id="sheetBg"></div>
+    <div class="sheet-body">
+      <div class="grab"></div>
+      <div class="tiles">
+        <button class="tile" data-set="symmetry"><i data-i="mirror"></i><span>تقارن آینه‌ای</span></button>
+        <button class="tile" data-set="autoRot"><i data-i="spin"></i><span>چرخش خودکار</span></button>
+        <button class="tile" data-set="depth"><i data-i="cube"></i><span>عمق با دست</span></button>
+        <button class="tile" data-set="skeleton"><i data-i="hand"></i><span>اسکلت دست</span></button>
+        <button class="tile" data-set="showCam"><i data-i="video"></i><span>نمایش دوربین</span></button>
+        <button class="tile" data-set="grid"><i data-i="grid"></i><span>شبکه</span></button>
+        <button class="tile" data-set="glow"><i data-i="sparkle"></i><span>نئون</span></button>
+        <button class="tile" id="aFlip"><i data-i="spin"></i><span>جلو / عقب</span></button>
+        <button class="tile" id="aReset"><i data-i="reset"></i><span>بازنشانی نما</span></button>
+        <button class="tile" id="aShare"><i data-i="share"></i><span>اشتراک‌گذاری</span></button>
+        <button class="tile" id="aNew"><i data-i="plus"></i><span>نقاشی جدید</span></button>
+        <button class="tile" data-go="guide"><i data-i="book"></i><span>راهنما</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gate">
+    <div class="gbox" id="gIntro" hidden>
+      <h3>قبل از شروع</h3>
+      <ul class="mini">
+        <li><span>☝️</span><div>فقط اشاره بالا: نقاشی</div></li>
+        <li><span>🤏</span><div>شست + اشاره باز: زوم این و اوت</div></li>
+        <li><span>👍</span><div>فقط شست باز: چرخش سه‌بعدی</div></li>
+        <li><span>🖐️</span><div>کف دست باز (یک ثانیه): پاک کردن همه</div></li>
+      </ul>
+      <p>دست را داخل قاب دوربین و در نور کافی نگه دار. برنامه برای دیدن دستت اجازه‌ی دوربین می‌خواهد.</p>
+      <button class="btn" id="gGo" style="margin-top:4px"><span>شروع</span></button>
+    </div>
+    <div class="gbox" id="gBusy" hidden><div class="spin"></div><p id="gBusyTx"></p></div>
+    <div class="gbox" id="gErr" hidden>
+      <h3>مشکلی پیش آمد</h3><p id="gErrTx"></p>
+      <button class="btn" id="gRetry"><span>تلاش دوباره</span></button>
+      <button class="btn ghost" data-back style="margin-top:0"><span>بازگشت</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= پنجره‌ها ======================= -->
+<div id="viewer" class="modal" hidden>
+  <div class="mcard">
+    <img id="vImg" alt="نقاشی">
+    <div class="mrow">
+      <button class="btn" id="vEdit"><span>ادامه‌ی ویرایش</span></button>
+      <button class="btn ghost" id="vShare"><span>اشتراک‌گذاری</span></button>
+      <button class="btn danger" id="vDel"><span>حذف</span></button>
+      <button class="btn ghost" id="vClose"><span>بستن</span></button>
+    </div>
+  </div>
 </div>
+<div id="dialog" class="modal" hidden>
+  <div class="mcard">
+    <p id="dlgMsg"></p>
+    <div class="mrow"><button class="btn danger" id="dlgOk"><span>تأیید</span></button><button class="btn ghost" id="dlgNo"><span>انصراف</span></button></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
 
 <script>
-/* ================= تنظیمات (اینجا را می‌توانی تغییر بدهی) ================= */
-const MAX_HANDS   = 1;      // تعداد دست‌ها (کنترل فقط با دست اول)
-const MODEL_LEVEL = 0;      // 0 سبک و سریع (دانلود کمتر)، 1 دقیق‌تر
-const CLEAR_HOLD  = 900;    // میلی‌ثانیه نگه داشتن کف دست برای پاک کردن همه
-const SMOOTH      = 0.55;   // نرمی نشانگر: هرچه کمتر، نرم‌تر ولی کندتر
-const ROT_SPEED   = 0.012;  // سرعت چرخش (رادیان به ازای هر پیکسل حرکت شست)
-const ZOOM_MIN    = 0.25;   // کمترین زوم
-const ZOOM_MAX    = 8;      // بیشترین زوم
-const ZOOM_REWIND = 450;    // میلی‌ثانیه: وقتی از حالت زوم خارج می‌شوی، زوم به همین‌قدر قبل برمی‌گردد
-const DEPTH_GAIN  = 3;      // شدت عمق با نزدیک/دور کردن دست
-const THUMB_ON    = 0.65;   // شست وقتی «باز» حساب می‌شود که از این مقدار بیشتر شود
-const THUMB_OFF   = 0.45;   // و وقتی «بسته» حساب می‌شود که از این کمتر شود
-const COLORS      = ['#ff4d6d','#ffd23f','#3ddc97','#4dabf7','#ffffff'];
+'use strict';
+/* =====================================================================
+   پیکربندی برنامه
+   ===================================================================== */
+const APP = {
+  name: 'نقاشی انگشتی',
+  version: '1.0.0',
+  pkg: 'com.eight8.airdraw',                       // بعد از انتشار نهایی، با نام بسته‌ی واقعی یکی باشد
+  rubikaUrl: 'https://rubika.ir/Studio_Eight8',
+  devId: '@Hesam23799',
+  email: 'hesameghbalei1391@gmail.com'
+};
 
+/* ---- تنظیمات فنی حرکت‌ها ---- */
+const MAX_HANDS = 1, MODEL_LEVEL = 0;
+const CLEAR_HOLD = 900, ROT_SPEED = 0.012, ZOOM_MIN = 0.25, ZOOM_MAX = 8, ZOOM_REWIND = 450, DEPTH_GAIN = 3;
+const THUMB_ON = 0.65, THUMB_OFF = 0.45;
+const COLORS = ['#ff4d6d', '#ff9f43', '#ffd23f', '#3ddc97', '#4dabf7', '#a78bfa', '#ffffff'];
 const CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
   [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
-const TIPS = [4,8,12,16,20];
+const TIPS = [4, 8, 12, 16, 20];
+const SOURCES = [
+  './mediapipe/',
+  'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/',
+  'https://unpkg.com/@mediapipe/hands@0.4.1675469240/'
+];
 
-/* ================= عناصر ================= */
+/* =====================================================================
+   ابزارهای کمکی
+   ===================================================================== */
 const $ = id => document.getElementById(id);
-const video = $('video'), view = $('view');
-const drawC = $('draw'), overC = $('over');
-const dctx = drawC.getContext('2d'), octx = overC.getContext('2d');
-const chips = [...document.querySelectorAll('#fingers span')];
+const qs = (s, r = document) => r.querySelector(s);
+const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const fa = n => Number(n).toLocaleString('fa-IR');
+const isNative = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const plugin = n => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[n]) || null;
 
-/* ================= وضعیت ================= */
-let errShown = false, loadHost = '';
-let hands = null, stream = null, running = false, busy = false, lost = true;
-let facing = 'user', mirror = true;
-let color = COLORS[0], size = +$('size').value, showSkel = true;
-let drawEnabled = true, depthOn = false, depthRef = null, hsSm = null, thumbOn = false;
-let mode = 'idle', pending = 'idle', pendCount = 0;
-let lastPt = null, sm = null, clearStart = 0, clearDone = false;
-let zoomSt = null, rSm = null, rotLast = null, zoomHist = [], showCam = false;
+const ICONS = {
+  back:   '<path d="m9 18 6-6-6-6"/>',
+  play:   '<polygon points="7 3 20 12 7 21 7 3"/>',
+  book:   '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
+  image:  '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/>',
+  sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
+  info:   '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
+  undo:   '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
+  trash:  '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  save:   '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  more:   '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  mirror: '<path d="M12 3v18"/><path d="m8 7-5 5 5 5V7Z"/><path d="m16 7 5 5-5 5V7Z"/>',
+  spin:   '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+  cube:   '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  hand:   '<path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
+  video:  '<path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>',
+  grid:   '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  sparkle:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M19 15l.7 1.8L21.5 17.5l-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7z"/>',
+  reset:  '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  share:  '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/>',
+  plus:   '<path d="M12 5v14M5 12h14"/>',
+  send:   '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  user:   '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  copy:   '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  mail:   '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  star:   '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'
+};
+const ic = n => '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[n] || '') + '</svg>';
+qsa('[data-i]').forEach(el => { el.innerHTML = ic(el.dataset.i); });
+$('verHome').textContent = fa(APP.version); $('verAbout').textContent = fa(APP.version);
 
-/* نقاشی به‌صورت خط‌های برداری سه‌بعدی ذخیره می‌شود: {p:[[x,y,z],...], w, c} */
-let strokes = [], history = [], curStroke = null, snapped = false;
+/* ---- ذخیره‌ی ساده‌ی تنظیمات ---- */
+const store = {
+  get(k, def) { try { const v = localStorage.getItem('ad_' + k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } },
+  set(k, v) { try { localStorage.setItem('ad_' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const DEFAULTS = { showCam: false, skeleton: true, glow: true, grid: false, watermark: true,
+  depth: false, symmetry: false, autoRot: false, rotSpeed: 1, smooth: 0.55 };
+let S = Object.assign({}, DEFAULTS, store.get('settings', {}));
+S.autoRot = false; S.symmetry = false;
+function saveS() { const c = Object.assign({}, S); delete c.autoRot; delete c.symmetry; store.set('settings', c); }
 
-/* نما: چرخش، زوم و جابه‌جایی (نقطه مرکز چرخش) */
-const V = { yaw: 0, pitch: 0, zoom: 1, px: 0, py: 0, pz: 0 };
-const T = { cy: 1, sy: 0, cp: 1, sp: 0 };
-let F = 1000, CX = 0, CY = 0;          // فاصله کانونی و مرکز بوم
-let PX = 0, PY = 0, PK = 1, PZ = 0;    // خروجی proj
-
-/* ================= ریاضی سه‌بعدی ================= */
-function trig() {
-  T.cy = Math.cos(V.yaw);   T.sy = Math.sin(V.yaw);
-  T.cp = Math.cos(V.pitch); T.sp = Math.sin(V.pitch);
+let toastT = null;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2300);
 }
 
-// نقطه دنیا -> پیکسل صفحه (نتیجه در PX, PY, PK, PZ)
+/* ---- کپی و باز کردن لینک بیرونی ---- */
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) {
+    const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+    try { document.execCommand('copy'); } catch (_) {} a.remove();
+  }
+  toast('کپی شد');
+}
+async function openExternal(url) {
+  const L = isNative() && plugin('AppLauncher');
+  if (L) { try { await L.openUrl({ url }); return true; } catch (e) { return false; } }
+  window.open(url, '_blank', 'noopener'); return true;
+}
+
+/* =====================================================================
+   گالری (IndexedDB)
+   ===================================================================== */
+const DB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      if (this.db) return res(this.db);
+      const r = indexedDB.open('airdraw', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('items', { keyPath: 'id' });
+      r.onsuccess = () => { this.db = r.result; res(this.db); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  async all() {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const q = db.transaction('items').objectStore('items').getAll();
+      q.onsuccess = () => res((q.result || []).sort((a, b) => b.t - a.t));
+      q.onerror = () => rej(q.error);
+    });
+  },
+  async put(o) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('items', 'readwrite'); tx.objectStore('items').put(o);
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+    });
+  },
+  async del(id) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('items', 'readwrite'); tx.objectStore('items').delete(id);
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+    });
+  },
+  async clear() {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('items', 'readwrite'); tx.objectStore('items').clear();
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+    });
+  }
+};
+
+async function refreshGallery() {
+  let list = [];
+  try { list = await DB.all(); } catch (e) { console.error(e); }
+  $('galCount').textContent = fa(list.length);
+  $('galEmpty').hidden = list.length > 0;
+  const g = $('galGrid'); g.innerHTML = '';
+  list.forEach(it => {
+    const b = document.createElement('button'); b.className = 'thumb';
+    const img = document.createElement('img'); img.src = it.thumb; img.alt = '';
+    const sp = document.createElement('span');
+    try { sp.textContent = new Date(it.t).toLocaleDateString('fa-IR', { month: 'long', day: 'numeric' }); } catch (e) { sp.textContent = ''; }
+    b.appendChild(img); b.appendChild(sp);
+    b.onclick = () => openViewer(it);
+    g.appendChild(b);
+  });
+}
+
+/* =====================================================================
+   ناوبری بین صفحه‌ها و لایه‌ها (دکمه‌ی برگشت اندروید درست کار می‌کند)
+   ===================================================================== */
+const SCREENS = ['home', 'guide', 'gallery', 'settings', 'about', 'play'];
+let cur = 'home';
+const layerStack = [];
+let afterPop = null, dlgRes = null;
+
+function show(name) {
+  if (cur === 'play' && name !== 'play') stopPlay();
+  cur = name;
+  SCREENS.forEach(s => $('scr-' + s).classList.toggle('active', s === name));
+  $('scr-' + name).scrollTop = 0;
+  if (name === 'gallery' || name === 'home') refreshGallery();
+  if (name === 'play') startPlay();
+}
+function go(name) {
+  if (name === cur) return;
+  while (layerStack.length) hideLayer(layerStack.pop());
+  history.pushState({ s: name, n: 0 }, '');
+  show(name);
+}
+function openLayer(id) {
+  $(id).hidden = false; layerStack.push(id);
+  history.pushState({ s: cur, n: layerStack.length }, '');
+}
+function closeLayer() { if (layerStack.length) history.back(); }
+function hideLayer(id) {
+  $(id).hidden = true;
+  if (id === 'dialog' && dlgRes) { const r = dlgRes; dlgRes = null; r(false); }
+}
+history.replaceState({ s: 'home', n: 0 }, '');
+addEventListener('popstate', e => {
+  const st = e.state || { s: 'home', n: 0 };
+  while (layerStack.length > (st.n || 0)) hideLayer(layerStack.pop());
+  if (st.s !== cur) show(st.s);
+  if (afterPop) { const f = afterPop; afterPop = null; setTimeout(f, 0); }
+});
+
+function ask(msg, ok) {
+  return new Promise(res => {
+    $('dlgMsg').textContent = msg; qs('span', $('dlgOk')).textContent = ok || 'تأیید';
+    dlgRes = res; openLayer('dialog');
+  });
+}
+$('dlgOk').onclick = () => { const r = dlgRes; dlgRes = null; afterPop = () => r && r(true); closeLayer(); };
+$('dlgNo').onclick = () => closeLayer();
+
+qsa('[data-go]').forEach(b => { b.onclick = () => go(b.dataset.go); });
+qsa('[data-back]').forEach(b => { b.onclick = () => history.back(); });
+qsa('[data-ext]').forEach(b => { b.onclick = async () => { if (!(await openExternal(b.dataset.ext))) toast('باز نشد'); }; });
+qsa('[data-copy]').forEach(b => { b.onclick = () => copyText(b.dataset.copy); });
+$('btnStart').onclick = () => go('play');
+
+/* =====================================================================
+   تنظیمات: یک سوییچ در چند جا
+   ===================================================================== */
+function applyS() {
+  qsa('[data-set]').forEach(el => {
+    const k = el.dataset.set;
+    if (el.type === 'range') el.value = S[k];
+    else { el.classList.toggle('on', !!S[k]); if (el.getAttribute('role') === 'switch') el.setAttribute('aria-checked', String(!!S[k])); }
+  });
+  view.classList.toggle('cam', !!S.showCam);
+  render();
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest ? e.target.closest('[data-set]') : null;
+  if (!t || t.type === 'range') return;
+  const k = t.dataset.set; S[k] = !S[k];
+  if (k === 'depth') { depthRef = null; hsSm = null; }
+  saveS(); applyS();
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t && t.dataset && t.dataset.set && t.type === 'range') { S[t.dataset.set] = +t.value; saveS(); }
+});
+$('btnResetSet').onclick = () => { S = Object.assign({}, DEFAULTS); saveS(); applyS(); toast('تنظیمات به حالت اول برگشت'); };
+$('btnClearGal').onclick = async () => {
+  if (await ask('همه‌ی نقاشی‌های گالری برای همیشه پاک شوند؟', 'پاک شود')) {
+    try { await DB.clear(); } catch (e) {}
+    refreshGallery(); toast('گالری خالی شد');
+  }
+};
+
+/* =====================================================================
+   درباره ما
+   ===================================================================== */
+$('btnMail').onclick = async () => {
+  const url = 'mailto:' + APP.email + '?subject=' + encodeURIComponent('بازخورد ' + APP.name + ' ' + APP.version);
+  if (!(await openExternal(url))) { copyText(APP.email); }
+};
+$('rateBazaar').onclick = async () => { if (!(await openExternal('bazaar://details?id=' + APP.pkg))) toast('کافه‌بازار نصب نیست'); };
+$('rateMyket').onclick = async () => { if (!(await openExternal('myket://comment?id=' + APP.pkg))) toast('مایکت نصب نیست'); };
+$('btnShareApp').onclick = async () => {
+  const text = APP.name + ' — در هوا نقاشی کن، زوم کن و سه‌بعدی بچرخان ✋\nکانال ما در روبیکا: ' + APP.rubikaUrl;
+  try {
+    const Sh = isNative() && plugin('Share');
+    if (Sh) { await Sh.share({ title: APP.name, text, dialogTitle: 'معرفی به دوستان' }); return; }
+    if (navigator.share) { await navigator.share({ title: APP.name, text }); return; }
+  } catch (e) { return; }
+  copyText(text);
+};
+
+/* =====================================================================
+   ریاضی سه‌بعدی
+   ===================================================================== */
+const V = { yaw: 0, pitch: 0, zoom: 1, px: 0, py: 0, pz: 0 };
+const T = { cy: 1, sy: 0, cp: 1, sp: 0 };
+let F = 1000, CX = 0, CY = 0, PX = 0, PY = 0, PK = 1, PZ = 0;
+
+function trig() { T.cy = Math.cos(V.yaw); T.sy = Math.sin(V.yaw); T.cp = Math.cos(V.pitch); T.sp = Math.sin(V.pitch); }
 function proj(x, y, z) {
   x -= V.px; y -= V.py; z -= V.pz;
   let x1 = x * T.cy + z * T.sy, z1 = -x * T.sy + z * T.cy;
   let y2 = y * T.cp + z1 * T.sp, z2 = -y * T.sp + z1 * T.cp;
   x1 *= V.zoom; y2 *= V.zoom; z2 *= V.zoom;
   const den = F - z2;
-  if (den < F * 0.15) { PK = 0; return false; }   // پشت دوربین
+  if (den < F * 0.15) { PK = 0; return false; }
   PK = F / den; PX = CX + x1 * PK; PY = CY + y2 * PK; PZ = z2;
   return true;
 }
-
 function unrot(xv, yv, zv) {
   trig();
   const y1 = yv * T.cp - zv * T.sp, z1 = yv * T.sp + zv * T.cp;
   return [xv * T.cy - z1 * T.sy, y1, xv * T.sy + z1 * T.cy];
 }
-
-// پیکسل صفحه (در عمق zv نسبت به صفحه) -> نقطه دنیا
 function unproj(sx, sy, zv) {
   const k = (F - zv) / F;
   const r = unrot((sx - CX) * k, (sy - CY) * k, zv);
   return [r[0] / V.zoom + V.px, r[1] / V.zoom + V.py, r[2] / V.zoom + V.pz];
 }
 
-/* ================= رندر نقاشی ================= */
-function drawFrame(W, H) {
-  // قاب صفحه، فقط وقتی نما تغییر کرده تا جهت چرخش دیده شود
-  const c = [[-W / 2, -H / 2], [W / 2, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]];
-  dctx.save();
-  dctx.strokeStyle = 'rgba(255,255,255,.35)';
-  dctx.lineWidth = 2 * W / 640;
-  dctx.setLineDash([10, 8]);
+/* =====================================================================
+   وضعیت صفحه‌ی نقاشی
+   ===================================================================== */
+const video = $('video'), view = $('view'), drawC = $('draw'), overC = $('over');
+const dctx = drawC.getContext('2d'), octx = overC.getContext('2d');
+const chips = qsa('#fingers span');
+
+let hands = null, stream = null, running = false, busy = false, lost = true, errShown = false, playToken = 0, wasPlaying = false;
+let facing = 'user', mirror = true;
+let color = COLORS[0], size = +$('size').value, drawEnabled = true;
+let depthRef = null, hsSm = null, thumbOn = false;
+let mode = 'idle', pending = 'idle', pendCount = 0;
+let lastPt = null, sm = null, clearStart = 0, clearDone = false;
+let zoomSt = null, rSm = null, rotLast = null, zoomHist = [];
+let strokes = [], history_ = [], curStroke = null, curMirror = null, symX = 0, snapped = false;
+
+/* ---- رنگ‌ها و قلم ---- */
+COLORS.forEach((c, i) => {
+  const b = document.createElement('button');
+  b.className = 'sc' + (i === 0 ? ' sel' : ''); b.style.background = c; b.setAttribute('aria-label', 'رنگ ' + (i + 1));
+  b.onclick = () => { color = c; qsa('.sc', $('colors')).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); };
+  $('colors').appendChild(b);
+});
+(function customColor() {
+  const l = document.createElement('label'); l.className = 'sc custom'; l.setAttribute('aria-label', 'رنگ دلخواه');
+  const inp = document.createElement('input'); inp.type = 'color'; inp.value = '#ff4d6d';
+  inp.oninput = () => { color = inp.value; qsa('.sc', $('colors')).forEach(x => x.classList.remove('sel')); l.classList.add('sel'); };
+  l.appendChild(inp); $('colors').appendChild(l);
+})();
+$('size').oninput = e => { size = +e.target.value; };
+
+/* =====================================================================
+   رندر نقاشی سه‌بعدی
+   ===================================================================== */
+function drawGrid(W, H) {
+  const step = 64, R = Math.max(W, H) * 2;
+  dctx.save(); dctx.strokeStyle = 'rgba(255,255,255,.10)'; dctx.lineWidth = Math.max(1, W / 640);
   dctx.beginPath();
-  let ok = true;
-  c.forEach(([x, y], i) => {
-    if (!proj(x, y, 0)) { ok = false; return; }
-    if (i) dctx.lineTo(PX, PY); else dctx.moveTo(PX, PY);
-  });
+  for (let g = -R; g <= R; g += step) {
+    if (proj(g, -R, 0)) { const x0 = PX, y0 = PY; if (proj(g, R, 0)) { dctx.moveTo(x0, y0); dctx.lineTo(PX, PY); } }
+    if (proj(-R, g, 0)) { const x0 = PX, y0 = PY; if (proj(R, g, 0)) { dctx.moveTo(x0, y0); dctx.lineTo(PX, PY); } }
+  }
+  dctx.stroke(); dctx.restore();
+}
+function drawFrame(W, H) {
+  const c = [[-W / 2, -H / 2], [W / 2, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]];
+  dctx.save(); dctx.strokeStyle = 'rgba(255,255,255,.35)'; dctx.lineWidth = 2 * W / 640; dctx.setLineDash([10, 8]);
+  dctx.beginPath(); let ok = true;
+  c.forEach(([x, y], i) => { if (!proj(x, y, 0)) { ok = false; return; } if (i) dctx.lineTo(PX, PY); else dctx.moveTo(PX, PY); });
   if (ok) { dctx.closePath(); dctx.stroke(); }
   dctx.restore();
 }
-
 function render() {
   const W = drawC.width, H = drawC.height;
   dctx.clearRect(0, 0, W, H);
   trig();
-  const changedView = Math.abs(V.yaw) > 0.005 || Math.abs(V.pitch) > 0.005 ||
-    Math.abs(V.zoom - 1) > 0.005 || V.px || V.py || V.pz;
-  if (changedView) drawFrame(W, H);
+  if (S.grid) drawGrid(W, H);
+  const moved = Math.abs(V.yaw) > 0.005 || Math.abs(V.pitch) > 0.005 || Math.abs(V.zoom - 1) > 0.005 || V.px || V.py || V.pz;
+  if (moved) drawFrame(W, H);
 
-  // مرتب‌سازی از دور به نزدیک بر اساس مرکز هر خط
-  const order = [];
+  const order = []; let total = 0;
   for (const s of strokes) {
-    const P = s.p, n = P.length;
-    let sx = 0, sy = 0, sz = 0;
+    const P = s.p, n = P.length; let sx = 0, sy = 0, sz = 0;
     for (let i = 0; i < n; i++) { sx += P[i][0]; sy += P[i][1]; sz += P[i][2]; }
+    total += n;
     if (!proj(sx / n, sy / n, sz / n)) { PZ = -1e9; PK = 1; }
     order.push({ s, z: PZ, k: PK });
   }
   order.sort((a, b) => a.z - b.z);
 
+  const glow = S.glow && total < 9000, TAU = Math.PI * 2;
   dctx.lineCap = 'round'; dctx.lineJoin = 'round';
   for (const { s, k } of order) {
-    const P = s.p;
-    const lw = Math.max(1, s.w * V.zoom * k);
-    dctx.globalAlpha = k >= 1 ? 1 : clamp(k * k, 0.3, 1);   // خط‌های دورتر کمی کم‌رنگ‌تر
-    dctx.strokeStyle = s.c; dctx.fillStyle = s.c; dctx.lineWidth = lw;
-    if (P.length === 1) {
-      if (proj(P[0][0], P[0][1], P[0][2])) {
-        dctx.beginPath(); dctx.arc(PX, PY, lw / 2, 0, Math.PI * 2); dctx.fill();
+    const P = s.p, lw = Math.max(1, s.w * V.zoom * k), alpha = k >= 1 ? 1 : clamp(k * k, 0.3, 1);
+    const path = new Path2D(); let dot = false;
+    if (P.length === 1) { dot = true; if (proj(P[0][0], P[0][1], P[0][2])) path.arc(PX, PY, lw / 2, 0, TAU); }
+    else {
+      let pen = false;
+      for (let i = 0; i < P.length; i++) {
+        const p = P[i];
+        if (!proj(p[0], p[1], p[2])) { pen = false; continue; }
+        if (pen) path.lineTo(PX, PY); else { path.moveTo(PX, PY); pen = true; }
       }
-      continue;
     }
-    dctx.beginPath();
-    let pen = false;
-    for (let i = 0; i < P.length; i++) {
-      const p = P[i];
-      if (!proj(p[0], p[1], p[2])) { pen = false; continue; }
-      if (pen) dctx.lineTo(PX, PY); else { dctx.moveTo(PX, PY); pen = true; }
-    }
-    dctx.stroke();
+    dctx.strokeStyle = s.c; dctx.fillStyle = s.c;
+    if (glow && !dot) { dctx.globalAlpha = alpha * 0.22; dctx.lineWidth = lw * 3; dctx.stroke(path); }
+    dctx.globalAlpha = alpha; dctx.lineWidth = lw;
+    if (dot) dctx.fill(path); else dctx.stroke(path);
   }
   dctx.globalAlpha = 1;
 }
 
-/* ================= پاک‌کن و تاریخچه ================= */
+/* =====================================================================
+   پاک‌کن، تاریخچه و پروژه‌ها
+   ===================================================================== */
 function segDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
-  let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0;
-  t = clamp(t, 0, 1);
+  let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0; t = clamp(t, 0, 1);
   return Math.hypot(ax + t * dx - px, ay + t * dy - py);
 }
+function pushHistory() { history_.push(strokes.slice()); if (history_.length > 60) history_.shift(); }
 
-function pushHistory() {
-  history.push(strokes.slice());
-  if (history.length > 60) history.shift();
-}
-
-// پاک‌کن در فضای صفحه کار می‌کند؛ خط‌هایی که از دایره رد می‌شوند بریده می‌شوند
 function eraseAt(ex, ey, r) {
   trig();
-  let changed = false;
-  const out = [];
+  let changed = false; const out = [];
   for (const s of strokes) {
-    const P = s.p, n = P.length;
-    const X = new Array(n), Y = new Array(n);
-    for (let i = 0; i < n; i++) {
-      if (proj(P[i][0], P[i][1], P[i][2])) { X[i] = PX; Y[i] = PY; } else { X[i] = NaN; Y[i] = NaN; }
-    }
+    const P = s.p, n = P.length, X = new Array(n), Y = new Array(n);
+    for (let i = 0; i < n; i++) { if (proj(P[i][0], P[i][1], P[i][2])) { X[i] = PX; Y[i] = PY; } else { X[i] = NaN; Y[i] = NaN; } }
     let hit = false;
     for (let i = 0; i < n; i++) {
       if (Math.hypot(X[i] - ex, Y[i] - ey) < r) { hit = true; break; }
       if (i < n - 1 && segDist(ex, ey, X[i], Y[i], X[i + 1], Y[i + 1]) < r) { hit = true; break; }
     }
     if (!hit) { out.push(s); continue; }
-
     changed = true;
     let run = [];
-    const flush = () => {
-      if (run.length >= 2) out.push({ p: run, w: s.w, c: s.c });
-      run = [];
-    };
+    const flush = () => { if (run.length >= 2) out.push({ p: run, w: s.w, c: s.c }); run = []; };
     for (let i = 0; i < n; i++) {
       if (Math.hypot(X[i] - ex, Y[i] - ey) < r) { flush(); continue; }
       run.push(P[i]);
@@ -306,192 +879,207 @@ function eraseAt(ex, ey, r) {
     flush();
   }
   if (changed) {
-    if (!snapped) {
-      history.push(strokes);
-      if (history.length > 60) history.shift();
-      snapped = true;
-    }
+    if (!snapped) { history_.push(strokes); if (history_.length > 60) history_.shift(); snapped = true; }
     strokes = out;
   }
   return changed;
 }
-
 function clearAll() {
-  if (strokes.length) { history.push(strokes); if (history.length > 60) history.shift(); }
-  strokes = []; curStroke = null; depthRef = null;
-  render();
+  if (strokes.length) { history_.push(strokes); if (history_.length > 60) history_.shift(); }
+  strokes = []; curStroke = curMirror = null; depthRef = null; render();
 }
 function undo() {
-  if (!history.length) return;
-  strokes = history.pop(); curStroke = null; lastPt = null;
-  render();
+  if (!history_.length) { toast('چیزی برای برگرداندن نیست'); return; }
+  strokes = history_.pop(); curStroke = curMirror = null; lastPt = null; render();
 }
-function resetView() {
-  V.yaw = V.pitch = 0; V.zoom = 1; V.px = V.py = V.pz = 0;
-  depthRef = null;
-  render();
-}
-
-// وقتی از حالت زوم خارج می‌شوی، انگشت‌ها در حال برگشتن به حالت عادی هستند و
-// فاصله‌شان عوض می‌شود. پس زوم را به مقدارِ کمی قبل از خروج برمی‌گردانیم.
+function resetView() { V.yaw = V.pitch = 0; V.zoom = 1; V.px = V.py = V.pz = 0; depthRef = null; render(); }
 function rewindZoom() {
   if (!zoomSt) return;
   const cutoff = performance.now() - ZOOM_REWIND;
   let st = { zoom: zoomSt.z0, px: zoomSt.pan0[0], py: zoomSt.pan0[1], pz: zoomSt.pan0[2] };
   for (const h of zoomHist) { if (h.t <= cutoff) st = h; else break; }
   V.zoom = st.zoom; V.px = st.px; V.py = st.py; V.pz = st.pz;
-  zoomHist = []; zoomSt = null;
+  zoomHist = []; zoomSt = null; render();
+}
+
+/* ---- خروجی تصویر، ذخیره و اشتراک‌گذاری ---- */
+function composeImage() {
+  const W = drawC.width, H = drawC.height, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.save();
+  if (mirror) { x.translate(W, 0); x.scale(-1, 1); }
+  x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+  if (S.showCam && video.readyState >= 2) x.drawImage(video, 0, 0, W, H);
+  x.drawImage(drawC, 0, 0);
+  x.restore();
+  if (S.watermark) {
+    x.font = '700 ' + Math.round(W * 0.05) + 'px system-ui, sans-serif';
+    x.textAlign = 'left'; x.textBaseline = 'bottom'; x.fillStyle = 'rgba(255,255,255,.6)';
+    x.fillText('Eight\u2078', W * 0.035, H - H * 0.03);
+  }
+  return c;
+}
+
+async function shareImage(dataUrl, filename) {
+  const FS = isNative() && plugin('Filesystem'), Sh = isNative() && plugin('Share');
+  if (FS && Sh) {
+    try {
+      const r = await FS.writeFile({ path: filename, data: dataUrl.split(',')[1], directory: 'CACHE' });
+      await Sh.share({ title: APP.name, files: [r.uri], dialogTitle: 'اشتراک‌گذاری نقاشی' });
+      return 'shared';
+    } catch (e) {
+      if (/cancel/i.test(String(e && (e.message || e)))) return 'cancel';
+      console.error(e);
+    }
+  }
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], filename, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: APP.name }); return 'shared'; }
+  } catch (e) { if (e && e.name === 'AbortError') return 'cancel'; }
+  const a = document.createElement('a'); a.href = dataUrl; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  return 'downloaded';
+}
+async function shareCurrent() {
+  if (!strokes.length) { toast('اول چیزی بکش'); return; }
+  const r = await shareImage(composeImage().toDataURL('image/png'), 'airdraw-' + Date.now() + '.png');
+  if (r === 'downloaded') toast('تصویر ذخیره شد');
+}
+async function saveToGallery() {
+  if (!strokes.length) { toast('اول چیزی بکش'); return; }
+  try {
+    const c = composeImage();
+    const th = document.createElement('canvas'); th.width = 360; th.height = Math.round(360 * c.height / c.width);
+    th.getContext('2d').drawImage(c, 0, 0, th.width, th.height);
+    const r1 = n => Math.round(n * 10) / 10;
+    await DB.put({
+      id: Date.now(), t: Date.now(), img: c.toDataURL('image/png'), thumb: th.toDataURL('image/jpeg', 0.82),
+      strokes: strokes.map(s => ({ p: s.p.map(q => [r1(q[0]), r1(q[1]), r1(q[2])]), w: r1(s.w * 100) / 100, c: s.c })),
+      view: { yaw: V.yaw, pitch: V.pitch, zoom: V.zoom, px: V.px, py: V.py, pz: V.pz }, w: drawC.width, h: drawC.height
+    });
+    toast('در گالری ذخیره شد ✓'); refreshGallery();
+  } catch (e) { console.error(e); toast('ذخیره نشد'); }
+}
+function loadProject(it) {
+  history_ = []; curStroke = curMirror = null; lastPt = null;
+  strokes = (it.strokes || []).map(s => ({ p: s.p, w: s.w, c: s.c }));
+  Object.assign(V, { yaw: 0, pitch: 0, zoom: 1, px: 0, py: 0, pz: 0 }, it.view || {});
   render();
 }
 
-/* ================= رابط ================= */
-COLORS.forEach((c, i) => {
-  const b = document.createElement('button');
-  b.style.background = c; b.setAttribute('aria-label', 'رنگ ' + (i + 1));
-  if (i === 0) b.classList.add('sel');
-  b.onclick = () => {
-    color = c;
-    [...$('colors').children].forEach(x => x.classList.remove('sel'));
-    b.classList.add('sel');
-  };
-  $('colors').appendChild(b);
-});
-$('size').oninput = e => size = +e.target.value;
-$('pen').onclick = e => {
-  drawEnabled = !drawEnabled;
-  e.currentTarget.setAttribute('aria-pressed', drawEnabled);
-  e.currentTarget.textContent = 'نقاشی: ' + (drawEnabled ? 'روشن' : 'خاموش');
-  curStroke = null; lastPt = null;
+/* ---- نمایش نقاشی ذخیره‌شده ---- */
+let curItem = null;
+function openViewer(it) { curItem = it; $('vImg').src = it.img; openLayer('viewer'); }
+$('vClose').onclick = () => closeLayer();
+$('vEdit').onclick = () => { afterPop = () => { loadProject(curItem); go('play'); }; closeLayer(); };
+$('vShare').onclick = async () => { const r = await shareImage(curItem.img, 'airdraw-' + curItem.id + '.png'); if (r === 'downloaded') toast('تصویر ذخیره شد'); };
+$('vDel').onclick = async () => {
+  if (await ask('این نقاشی حذف شود؟', 'حذف')) {
+    try { await DB.del(curItem.id); } catch (e) {}
+    closeLayer(); setTimeout(() => { refreshGallery(); toast('حذف شد'); }, 60);
+  }
 };
-$('depth').onclick = e => {
-  depthOn = !depthOn; depthRef = null;
-  e.currentTarget.setAttribute('aria-pressed', depthOn);
-  e.currentTarget.textContent = 'عمق: ' + (depthOn ? 'روشن' : 'خاموش');
+
+/* ---- دکمه‌های پایین صفحه‌ی نقاشی ---- */
+$('tPen').onclick = () => {
+  drawEnabled = !drawEnabled; curStroke = curMirror = null; lastPt = null;
+  $('tPen').classList.toggle('on', drawEnabled);
+  $('tPenTx').textContent = drawEnabled ? 'نقاشی' : 'متوقف';
 };
-$('skel').onclick = e => {
-  showSkel = !showSkel;
-  e.currentTarget.setAttribute('aria-pressed', showSkel);
+$('tUndo').onclick = undo;
+$('tClear').onclick = async () => {
+  if (!strokes.length) return;
+  if (await ask('همه‌ی نقاشی پاک شود؟ (با «برگردان» برمی‌گردد)', 'پاک شود')) { clearAll(); }
 };
-$('cam').onclick = e => {
-  showCam = !showCam;
-  view.classList.toggle('cam', showCam);
-  e.currentTarget.setAttribute('aria-pressed', showCam);
-};
-$('undo').onclick = undo;
-$('resetv').onclick = resetView;
-$('clear').onclick = clearAll;
-$('flip').onclick = async () => {
+$('tSave').onclick = saveToGallery;
+$('tMore').onclick = () => openLayer('sheet');
+$('sheetBg').onclick = () => closeLayer();
+$('aFlip').onclick = async () => {
   facing = facing === 'user' ? 'environment' : 'user';
-  try { await startCamera(); }
-  catch (e) { facing = facing === 'user' ? 'environment' : 'user'; try { await startCamera(); } catch (_) {} }
+  try { await startCamera(); } catch (e) { facing = facing === 'user' ? 'environment' : 'user'; try { await startCamera(); } catch (_) {} }
+  closeLayer();
 };
-$('save').onclick = () => {
-  const c = document.createElement('canvas');
-  c.width = drawC.width; c.height = drawC.height;
-  const x = c.getContext('2d');
-  if (mirror) { x.translate(c.width, 0); x.scale(-1, 1); }
-  if (showCam) x.drawImage(video, 0, 0, c.width, c.height);
-  else { x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); }
-  x.drawImage(drawC, 0, 0);
-  c.toBlob(b => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(b);
-    a.download = 'drawing-' + Date.now() + '.png';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  }, 'image/png');
+$('aReset').onclick = () => { resetView(); closeLayer(); };
+$('aShare').onclick = () => { afterPop = shareCurrent; closeLayer(); };
+$('aNew').onclick = () => {
+  afterPop = async () => {
+    if (!strokes.length) return;
+    if (await ask('نقاشی جدید شروع شود؟ نقاشی فعلی پاک می‌شود (با «برگردان» برمی‌گردد).', 'نقاشی جدید')) { clearAll(); resetView(); }
+  };
+  closeLayer();
 };
 
-function setMode(m, text) {
-  $('mode').dataset.m = m;
-  $('modeText').textContent = text;
-}
-const LABELS = {
-  idle:   'آماده — انگشت اشاره را بالا بگیر',
-  draw:   'در حال نقاشی',
-  hover:  'نقاشی خاموش است (فقط نشانگر)',
-  erase:  'پاک‌کن',
-  zoom:   'زوم: انگشت‌ها را دور یا نزدیک کن',
-  rotate: 'چرخش: شست را حرکت بده',
-  clear:  'پاک کردن همه…'
-};
-
-/* ================= دوربین ================= */
+/* =====================================================================
+   دوربین
+   ===================================================================== */
 async function startCamera() {
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = await navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 } }
+    audio: false, video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 } }
   });
-  video.srcObject = stream;
-  await video.play();
-  mirror = facing === 'user';
-  view.classList.toggle('mirror', mirror);
+  video.srcObject = stream; await video.play();
+  mirror = facing === 'user'; view.classList.toggle('mirror', mirror);
   layout();
 }
+function stopCamera() { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } video.srcObject = null; }
 
 function setSize(w, h) {
   if (drawC.width === w && drawC.height === h) return;
-  drawC.width = overC.width = w;
-  drawC.height = overC.height = h;
+  drawC.width = overC.width = w; drawC.height = overC.height = h;
   F = w * 1.6; CX = w / 2; CY = h / 2;
   render();
 }
-
 function layout() {
   const vw = video.videoWidth, vh = video.videoHeight;
   if (!vw) return;
   setSize(vw, vh);
   const s = Math.min(innerWidth / vw, innerHeight / vh);
-  view.style.width = vw * s + 'px';
-  view.style.height = vh * s + 'px';
+  view.style.width = vw * s + 'px'; view.style.height = vh * s + 'px';
 }
 addEventListener('resize', layout);
 addEventListener('orientationchange', () => setTimeout(layout, 300));
 
-/* ================= تشخیص انگشت‌ها (روی مختصات پیکسلی) ================= */
+/* =====================================================================
+   تشخیص انگشت‌ها
+   ===================================================================== */
 function fingerState(P, hand) {
-  // انگشت باز: نوک آن از مچ دورتر از مفصل میانی‌اش باشد
   const ext = (tip, pip) => d(P[tip], P[0]) > d(P[pip], P[0]) * 1.12;
-  // شست: فاصله نوک تا ریشه انگشت اشاره، با حدِ بالا و پایین تا سریع نپرد
   const tr = d(P[4], P[5]) / hand;
   thumbOn = thumbOn ? tr > THUMB_OFF : tr > THUMB_ON;
   return { thumb: thumbOn, index: ext(8, 6), middle: ext(12, 10), ring: ext(16, 14), pinky: ext(20, 18) };
 }
-
 function classify(f) {
   const others = f.middle || f.ring || f.pinky;
-  if (f.index && f.middle && f.ring && f.pinky) return 'clear';           // کف دست باز
-  if (f.index && f.middle && !f.ring && !f.pinky) return 'erase';         // اشاره + وسط
+  if (f.index && f.middle && f.ring && f.pinky) return 'clear';
+  if (f.index && f.middle && !f.ring && !f.pinky) return 'erase';
   if (f.index && !others) return f.thumb ? 'zoom' : (drawEnabled ? 'draw' : 'hover');
-  if (f.thumb && !f.index && !others) return 'rotate';                    // فقط شست
+  if (f.thumb && !f.index && !others) return 'rotate';
   return 'idle';
 }
 
-/* ================= نمایش روی صفحه ================= */
+const LABELS = {
+  idle: 'آماده — انگشت اشاره را بالا بگیر', draw: 'در حال نقاشی', hover: 'نقاشی متوقف است (فقط نشانگر)',
+  erase: 'پاک‌کن', zoom: 'زوم: انگشت‌ها را دور یا نزدیک کن', rotate: 'چرخش: شست را حرکت بده', clear: 'پاک کردن همه…'
+};
+function setMode(m, text) { $('mode').dataset.m = m; $('modeText').textContent = text; }
+
 function drawHand(P) {
   const k = overC.width / 640;
-  octx.lineWidth = 3 * k;
-  octx.strokeStyle = 'rgba(255,255,255,.8)';
-  octx.beginPath();
+  octx.lineWidth = 3 * k; octx.strokeStyle = 'rgba(255,255,255,.8)'; octx.beginPath();
   for (const [a, b] of CONNECTIONS) { octx.moveTo(P[a].x, P[a].y); octx.lineTo(P[b].x, P[b].y); }
   octx.stroke();
   for (let i = 0; i < 21; i++) {
     const tip = TIPS.includes(i);
-    octx.beginPath();
-    octx.arc(P[i].x, P[i].y, (tip ? 6 : 3.5) * k, 0, Math.PI * 2);
-    octx.fillStyle = tip ? '#3ddc97' : '#fff';
-    octx.fill();
+    octx.beginPath(); octx.arc(P[i].x, P[i].y, (tip ? 6 : 3.5) * k, 0, Math.PI * 2);
+    octx.fillStyle = tip ? '#3ddc97' : '#fff'; octx.fill();
   }
 }
-
 function drawCursor(progress, P) {
   const k = overC.width / 640, TAU = Math.PI * 2;
-  octx.save();
-  octx.lineWidth = 3 * k; octx.strokeStyle = '#fff';
+  octx.save(); octx.lineWidth = 3 * k; octx.strokeStyle = '#fff';
   if (mode === 'draw') {
-    octx.beginPath(); octx.arc(sm.x, sm.y, size / 2 + 2 * k, 0, TAU);
-    octx.fillStyle = color; octx.fill(); octx.stroke();
+    octx.beginPath(); octx.arc(sm.x, sm.y, size / 2 + 2 * k, 0, TAU); octx.fillStyle = color; octx.fill(); octx.stroke();
   } else if (mode === 'erase') {
     octx.beginPath(); octx.arc(sm.x, sm.y, size * 2, 0, TAU); octx.stroke();
   } else if (mode === 'clear') {
@@ -508,21 +1096,17 @@ function drawCursor(progress, P) {
     octx.beginPath(); octx.moveTo(sm.x - 26 * k, sm.y); octx.lineTo(sm.x + 26 * k, sm.y);
     octx.moveTo(sm.x, sm.y - 26 * k); octx.lineTo(sm.x, sm.y + 26 * k); octx.stroke();
   } else if (mode === 'hover') {
-    octx.setLineDash([6 * k, 6 * k]);
-    octx.beginPath(); octx.arc(sm.x, sm.y, 12 * k, 0, TAU); octx.stroke();
+    octx.setLineDash([6 * k, 6 * k]); octx.beginPath(); octx.arc(sm.x, sm.y, 12 * k, 0, TAU); octx.stroke();
   } else {
     octx.beginPath(); octx.arc(sm.x, sm.y, 9 * k, 0, TAU); octx.stroke();
   }
   octx.restore();
 }
 
-/* ================= نتیجه هر فریم ================= */
 function handLost() {
   if (mode === 'zoom') rewindZoom();
-  lost = true;
-  lastPt = null; curStroke = null; sm = null; rotLast = null; zoomSt = null;
-  snapped = false; clearStart = 0; clearDone = false;
-  mode = pending = 'idle'; pendCount = 0;
+  lost = true; lastPt = null; curStroke = curMirror = null; sm = null; rotLast = null; zoomSt = null;
+  snapped = false; clearStart = 0; clearDone = false; mode = pending = 'idle'; pendCount = 0;
   chips.forEach(c => c.classList.remove('on'));
   setMode('idle', 'دستی دیده نمی‌شود');
 }
@@ -530,17 +1114,14 @@ function handLost() {
 function onResults(res) {
   const W = overC.width, H = overC.height;
   octx.clearRect(0, 0, W, H);
-
   const all = res.multiHandLandmarks || [];
   if (!all.length) { handLost(); return; }
   if (lost) { lost = false; setMode(mode, LABELS[mode]); }
 
   const Ps = all.map(h => h.map(p => ({ x: p.x * W, y: p.y * H })));
-  if (showSkel) Ps.forEach(drawHand);
+  if (S.skeleton) Ps.forEach(drawHand);
 
-  const P = Ps[0];
-  const hand = d(P[0], P[9]) || 1;                 // اندازه کف دست به پیکسل
-  const f = fingerState(P, hand);
+  const P = Ps[0], hand = d(P[0], P[9]) || 1, f = fingerState(P, hand);
   chips.forEach(c => c.classList.toggle('on', !!f[c.dataset.f]));
   hsSm = hsSm == null ? hand : hsSm + (hand - hsSm) * 0.25;
 
@@ -548,59 +1129,47 @@ function onResults(res) {
   if (raw !== 'clear') clearDone = false;
   if (raw === 'clear' && clearDone) raw = 'idle';
 
-  // حالت باید دو فریم پشت‌سرهم ثابت بماند (جلوگیری از پرش)
   if (raw === pending) pendCount++; else { pending = raw; pendCount = 1; }
   if (pendCount >= 2 && raw !== mode) {
     if (mode === 'zoom') rewindZoom();
-    mode = raw;
-    lastPt = null; curStroke = null; sm = null; rotLast = null; snapped = false;
+    mode = raw; lastPt = null; curStroke = curMirror = null; sm = null; rotLast = null; snapped = false;
     clearStart = mode === 'clear' ? performance.now() : 0;
     if (mode === 'zoom') {
-      const fx = (P[4].x + P[8].x) / 2, fy = (P[4].y + P[8].y) / 2;
-      const r = Math.max(0.25, d(P[4], P[8]) / hand);
+      const fx = (P[4].x + P[8].x) / 2, fy = (P[4].y + P[8].y) / 2, r = Math.max(0.25, d(P[4], P[8]) / hand);
       zoomSt = { fx, fy, r0: r, z0: V.zoom, q: unproj(fx, fy, 0), pan0: [V.px, V.py, V.pz] };
-      zoomHist = [];
-      rSm = r;
+      zoomHist = []; rSm = r;
     }
     setMode(mode, LABELS[mode]);
   }
 
-  // نشانگر: نوک اشاره، ولی در حالت چرخش نوک شست
-  const pi = mode === 'rotate' ? 4 : 8;
+  const pi = mode === 'rotate' ? 4 : 8, sk = S.smooth;
   if (!sm) sm = { x: P[pi].x, y: P[pi].y };
-  else { sm.x += (P[pi].x - sm.x) * SMOOTH; sm.y += (P[pi].y - sm.y) * SMOOTH; }
+  else { sm.x += (P[pi].x - sm.x) * sk; sm.y += (P[pi].y - sm.y) * sk; }
 
   let changed = false, progress = 0;
-
   if (mode === 'draw') {
     if (!curStroke) {
       pushHistory();
-      curStroke = { p: [], w: size / V.zoom, c: color };
-      strokes.push(curStroke);
+      curStroke = { p: [], w: size / V.zoom, c: color }; strokes.push(curStroke);
+      if (S.symmetry) { curMirror = { p: [], w: curStroke.w, c: color }; strokes.push(curMirror); symX = V.px; } else curMirror = null;
     }
     if (!lastPt || Math.hypot(sm.x - lastPt.x, sm.y - lastPt.y) >= 1.5) {
       let zv = 0;
-      if (depthOn) {
-        if (depthRef == null) depthRef = hsSm;
-        zv = clamp((hsSm - depthRef) * DEPTH_GAIN, -F * 0.35, F * 0.35);
-      }
-      curStroke.p.push(unproj(sm.x, sm.y, zv));
-      lastPt = { x: sm.x, y: sm.y };
-      changed = true;
+      if (S.depth) { if (depthRef == null) depthRef = hsSm; zv = clamp((hsSm - depthRef) * DEPTH_GAIN, -F * 0.35, F * 0.35); }
+      const q = unproj(sm.x, sm.y, zv);
+      curStroke.p.push(q);
+      if (curMirror) curMirror.p.push([2 * symX - q[0], q[1], q[2]]);
+      lastPt = { x: sm.x, y: sm.y }; changed = true;
     }
   } else if (mode === 'erase') {
     if (eraseAt(sm.x, sm.y, size * 2)) changed = true;
   } else if (mode === 'zoom' && zoomSt) {
-    // فقط فریم‌هایی که واقعاً حالت زوم هستند اثر می‌گذارند (فریم‌های گذار نادیده گرفته می‌شوند)
     if (raw === 'zoom') {
       const r = d(P[4], P[8]) / hand;
       rSm += (r - rSm) * 0.4;
       V.zoom = clamp(zoomSt.z0 * (rSm / zoomSt.r0), ZOOM_MIN, ZOOM_MAX);
-      // نقطه‌ای که زیر انگشت‌ها بود سر جایش بماند
       const t = unrot(zoomSt.fx - CX, zoomSt.fy - CY, 0);
-      V.px = zoomSt.q[0] - t[0] / V.zoom;
-      V.py = zoomSt.q[1] - t[1] / V.zoom;
-      V.pz = zoomSt.q[2] - t[2] / V.zoom;
+      V.px = zoomSt.q[0] - t[0] / V.zoom; V.py = zoomSt.q[1] - t[1] / V.zoom; V.pz = zoomSt.q[2] - t[2] / V.zoom;
       const now = performance.now();
       zoomHist.push({ t: now, zoom: V.zoom, px: V.px, py: V.py, pz: V.pz });
       while (zoomHist.length && now - zoomHist[0].t > 1500) zoomHist.shift();
@@ -608,49 +1177,29 @@ function onResults(res) {
     }
   } else if (mode === 'rotate') {
     if (rotLast) {
-      let dx = sm.x - rotLast.x;
-      const dy = sm.y - rotLast.y;
-      if (mirror) dx = -dx;                       // تصویر آینه‌ای است
-      V.yaw += dx * ROT_SPEED;
-      V.pitch = clamp(V.pitch + dy * ROT_SPEED, -1.45, 1.45);
-      changed = true;
+      let dx = sm.x - rotLast.x; const dy = sm.y - rotLast.y;
+      if (mirror) dx = -dx;
+      const sp = ROT_SPEED * S.rotSpeed;
+      V.yaw += dx * sp; V.pitch = clamp(V.pitch + dy * sp, -1.45, 1.45); changed = true;
     }
     rotLast = { x: sm.x, y: sm.y };
   } else if (mode === 'clear') {
     progress = Math.min(1, (performance.now() - clearStart) / CLEAR_HOLD);
     if (progress >= 1) { clearAll(); clearDone = true; }
   }
-
   if (changed) render();
   drawCursor(progress, P);
 }
 
-/* ================= حلقه اصلی ================= */
-async function loop() {
-  if (!running) return;
-  if (!busy && video.readyState >= 2) {
-    busy = true;
-    try { await hands.send({ image: video }); } catch (e) { console.error(e); if (!errShown) { errShown = true; setMode('idle', 'خطا در تشخیص: ' + (e.message || e)); } }
-    busy = false;
-  }
-  requestAnimationFrame(loop);
-}
-
-/* ================= بارگذاری مدل (چند منبع، با زمان‌سنج و پیام خطا) ================= */
-const SOURCES = [
-  './mediapipe/',                                                       // نسخه آفلاین کنار فایل (اختیاری)
-  'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/',
-  'https://unpkg.com/@mediapipe/hands@0.4.1675469240/'
-];
-const withTimeout = (p, ms, name) => Promise.race([
-  p, new Promise((_, rej) => setTimeout(() => rej(new Error(name + ' timeout')), ms))
-]);
+/* =====================================================================
+   بارگذاری مدل و حلقه‌ی اصلی
+   ===================================================================== */
+const withTimeout = (p, ms, name) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(name + ' timeout')), ms))]);
 const loadScript = src => new Promise((res, rej) => {
-  const s = document.createElement('script');
-  s.src = src; s.onload = res; s.onerror = () => rej(new Error('script: ' + src));
+  const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script: ' + src));
   document.head.appendChild(s);
 });
-
+let loadHost = '';
 async function initHands() {
   let lastErr = null;
   for (const base of SOURCES) {
@@ -659,70 +1208,87 @@ async function initHands() {
     try {
       if (!window.Hands) await withTimeout(loadScript(base + 'hands.js'), 12000, 'hands.js');
       h = new Hands({ locateFile: f => base + f });
-      h.setOptions({
-        maxNumHands: MAX_HANDS,
-        modelComplexity: MODEL_LEVEL,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.5
-      });
+      h.setOptions({ maxNumHands: MAX_HANDS, modelComplexity: MODEL_LEVEL, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
       h.onResults(onResults);
       await withTimeout(h.initialize(), 60000, 'model');
       return h;
-    } catch (e) {
-      lastErr = e; console.error(base, e);
-      try { h && h.close(); } catch (_) {}
-    }
+    } catch (e) { lastErr = e; console.error(base, e); try { h && h.close(); } catch (_) {} }
   }
   throw lastErr || new Error('unknown');
 }
 
-$('go').onclick = async () => {
-  const msg = $('msg');
-  msg.textContent = '';
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    msg.textContent = 'دوربین فقط روی https یا localhost کار می‌کند. فایل را با یک سرور محلی باز کن.';
-    return;
-  }
-  $('go').disabled = true;
-  try {
-    await startCamera();
-  } catch (e) {
-    $('go').disabled = false;
-    msg.textContent = e.name === 'NotAllowedError'
-      ? 'اجازه دسترسی به دوربین داده نشد. از تنظیمات مرورگر اجازه بده و دوباره امتحان کن.'
-      : 'دوربین باز نشد: ' + e.message;
-    return;
-  }
-  $('start').hidden = true;
-  $('hud').hidden = false;
-  $('bar').hidden = false;
+function gate(state, msg) {
+  $('gate').hidden = !state;
+  if (!state) return;
+  $('gIntro').hidden = state !== 'intro'; $('gBusy').hidden = state !== 'busy'; $('gErr').hidden = state !== 'error';
+  if (msg) (state === 'busy' ? $('gBusyTx') : $('gErrTx')).textContent = msg;
+}
+function camMsg(e) {
+  const n = e && e.name;
+  if (n === 'NotAllowedError' || n === 'SecurityError') return 'اجازه‌ی دوربین داده نشده. در تنظیمات گوشی، دوربین را برای این برنامه روشن کن و دوباره تلاش کن.';
+  if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'دوربینی پیدا نشد.';
+  if (n === 'NotReadableError') return 'دوربین در حال استفاده‌ی برنامه‌ی دیگری است.';
+  return 'دوربین باز نشد' + (e && e.message ? ': ' + e.message : '.');
+}
 
-  const t0 = Date.now();
-  const tick = setInterval(() => {
-    setMode('idle', 'در حال بارگذاری مدل از ' + loadHost + '… ' + Math.round((Date.now() - t0) / 1000) + ' ثانیه');
-  }, 1000);
-  setMode('idle', 'در حال بارگذاری مدل…');
-
-  try {
-    if (!hands) hands = await initHands();
-  } catch (e) {
+function startPlay() {
+  const tk = ++playToken;
+  if (!store.get('intro', false)) { gate('intro'); return; }
+  boot(tk);
+}
+async function boot(tk) {
+  gate('busy', 'در حال روشن کردن دوربین…');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { gate('error', 'این دستگاه یا مرورگر دسترسی به دوربین را پشتیبانی نمی‌کند.'); return; }
+  try { await startCamera(); } catch (e) { if (tk === playToken) gate('error', camMsg(e)); return; }
+  if (tk !== playToken) { stopCamera(); return; }
+  if (!hands) {
+    const t0 = Date.now();
+    const tick = setInterval(() => gate('busy', 'در حال آماده‌سازی تشخیص دست (' + loadHost + ') ' + fa(Math.round((Date.now() - t0) / 1000)) + ' ثانیه'), 1000);
+    gate('busy', 'در حال آماده‌سازی تشخیص دست…');
+    try { hands = await initHands(); }
+    catch (e) { clearInterval(tick); if (tk === playToken) { stopCamera(); gate('error', 'تشخیص دست آماده نشد. اگر برنامه را از فروشگاه نصب کرده‌ای، آن را دوباره نصب کن. (' + (e.message || e) + ')'); } return; }
     clearInterval(tick);
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    $('start').hidden = false; $('hud').hidden = true; $('bar').hidden = true;
-    $('go').disabled = false;
-    msg.textContent = 'مدل دانلود نشد (' + (e.message || e) + '). اینترنت یا فیلتر را بررسی کن، یا مدل را آفلاین کنار فایل بگذار.';
-    return;
   }
-  clearInterval(tick);
-  lost = true; errShown = false;
-  setMode('idle', 'دستی دیده نمی‌شود');
-  running = true;
-  loop();
-};
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(console.error));
+  if (tk !== playToken) { stopCamera(); return; }
+  gate(null); lost = true; errShown = false; running = true;
+  setMode('idle', 'دستی دیده نمی‌شود'); loop();
+}
+function stopPlay() {
+  playToken++; running = false; stopCamera(); gate(null);
+  mode = pending = 'idle'; pendCount = 0; lastPt = null; sm = null; curStroke = curMirror = null; zoomSt = null; rotLast = null;
+  octx.clearRect(0, 0, overC.width, overC.height);
+}
+$('gGo').onclick = () => { store.set('intro', true); boot(++playToken); };
+$('gRetry').onclick = () => boot(++playToken);
+
+async function loop() {
+  if (!running) return;
+  if (S.autoRot && mode !== 'rotate') { V.yaw += 0.008; render(); }
+  if (!busy && hands && video.readyState >= 2) {
+    busy = true;
+    try { await hands.send({ image: video }); }
+    catch (e) { console.error(e); if (!errShown) { errShown = true; setMode('idle', 'خطا در تشخیص: ' + (e.message || e)); } }
+    busy = false;
+  }
+  requestAnimationFrame(loop);
+}
+
+/* وقتی برنامه به پس‌زمینه می‌رود، دوربین خاموش شود */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { wasPlaying = running; if (running) { running = false; stopCamera(); } }
+  else if (wasPlaying && cur === 'play') { wasPlaying = false; boot(++playToken); }
+});
+
+/* =====================================================================
+   شروع برنامه
+   ===================================================================== */
+applyS();
+refreshGallery();
+setTimeout(() => $('splash').classList.add('hide'), 2100);
+setTimeout(() => { const s = $('splash'); if (s) s.remove(); }, 2800);
+$('splash').onclick = () => $('splash').classList.add('hide');
+if ('serviceWorker' in navigator && !isNative()) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 </script>
 </body>
