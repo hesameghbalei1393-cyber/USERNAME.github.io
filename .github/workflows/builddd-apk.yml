@@ -79,4 +79,4 @@ jobs:
             keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" -storetype PKCS12 -alias airdraw -keyalg RSA -keysize 2048 -validity 10000 -storepass "$SIGNING_PASSWORD" -keypass "$SIGNING_PASSWORD" -dname "CN=Eight8, O=Eight8, C=IR"
             openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -in "$RUNNER_TEMP/release.jks" -out signing/release.jks.enc -pass env:SIGNING_PASSWORD
             git config user.name "github-actions"
-            git config user.email "a
+            git config user.email "actions@github.com"
